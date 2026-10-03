@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Dependency-free test runner so it builds without NuGet access. Swap to xUnit when your feed is available. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="expected-comparison.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Maritime.Appraisal.Domain\Maritime.Appraisal.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Maritime.Appraisal.Api\Maritime.Appraisal.Api.csproj" />
+  </ItemGroup>
+</Project>

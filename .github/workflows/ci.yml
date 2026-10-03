@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: SQLite runtime library
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-0
+
+      - name: Build
+        run: dotnet build MaritimeAppraisal.sln -c Release
+
+      - name: Unit and rule tests (TC-01 to TC-28)
+        run: dotnet run --project tests/Maritime.Appraisal.Tests -c Release --no-build
+
+      - name: API smoke test (31 checks)
+        run: bash tests/api-smoke.sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright
+        working-directory: tests/e2e
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Browser end-to-end test, server (27 checks)
+        run: |
+          Storage__SqlitePath=$RUNNER_TEMP/e2e.db dotnet run -c Release --no-build --project src/Maritime.Appraisal.Api --urls http://127.0.0.1:5077 > $RUNNER_TEMP/server.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:5077/health && break; sleep 1; done
+          cd tests/e2e && node e2e.js
+
+      - name: Browser end-to-end test, stand-alone page (23 checks)
+        working-directory: tests/e2e
+        run: MODE=local BASE=file://$GITHUB_WORKSPACE/prototype/fleet-appraisal-desk.html node e2e.js
+
+      - name: Publish for IIS
+        run: dotnet publish src/Maritime.Appraisal.Api -c Release -o publish
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fleet-appraisal-desk-iis
+          path: publish/
+
+      - name: Server log
+        if: failure()
+        run: cat $RUNNER_TEMP/server.log || true

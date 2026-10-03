@@ -1,0 +1,22 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+publish/
+# App data created at runtime (database, keys, logs)
+**/App_Data/
+logs/
+*.db
+*.db-wal
+*.db-shm
+# Node / Playwright
+node_modules/
+tests/e2e/test-results/
+playwright-report/
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

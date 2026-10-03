@@ -1,0 +1,1429 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fleet Appraisal Desk</title></head><body>
+<title>Fleet Appraisal Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a chart-room desk. Narrow top bar, a role tab rail, one working column; forms read like a ship's appraisal form. */
+:root {
+  --bg: #F2F4F5; --surface: #FFFFFF; --surface-2: #E8EDF0; --line: #D3DBE0; --line-2: #BCC7CF;
+  --ink: #13212E; --ink-2: #485866; --ink-3: #6B7A86;
+  --accent: #C8441A; --accent-ink: #FFFFFF; --accent-soft: #FBE6DD;
+  --fleet: #2B6CB0; --fleet-soft: #DCE8F4;
+  --good: #2E7D4F; --good-soft: #DFF1E6; --warn: #9A6412; --warn-soft: #FBEFD9; --crit: #B3261E; --crit-soft: #F9E0DE;
+  --display: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0D151C; --surface: #141F28; --surface-2: #1B2833; --line: #2A3946; --line-2: #3A4B59;
+  --ink: #E3E9EE; --ink-2: #A9B6C1; --ink-3: #8394A1;
+  --accent: #E8693A; --accent-ink: #160B06; --accent-soft: #3A2016;
+  --fleet: #4F8FDB; --fleet-soft: #182B40;
+  --good: #5CC08A; --good-soft: #15301F; --warn: #E3B04B; --warn-soft: #33270F; --crit: #F0736B; --crit-soft: #3A1715; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0D151C; --surface: #141F28; --surface-2: #1B2833; --line: #2A3946; --line-2: #3A4B59;
+  --ink: #E3E9EE; --ink-2: #A9B6C1; --ink-3: #8394A1;
+  --accent: #E8693A; --accent-ink: #160B06; --accent-soft: #3A2016;
+  --fleet: #4F8FDB; --fleet-soft: #182B40;
+  --good: #5CC08A; --good-soft: #15301F; --warn: #E3B04B; --warn-soft: #33270F; --crit: #F0736B; --crit-soft: #3A1715; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--ink); }
+body { font: 15px/1.5 var(--body); margin: 0; }
+h1, h2, h3 { font-family: var(--display); font-stretch: 88%; line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 { font-size: 26px; font-weight: 750; }
+h2 { font-size: 18px; font-weight: 700; }
+h3 { font-size: 15px; font-weight: 700; }
+p { margin: 0; }
+a { color: var(--fleet); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--fleet); outline-offset: 2px; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font: 600 11px/1.2 var(--body); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
+.muted { color: var(--ink-2); } .faint { color: var(--ink-3); } .small { font-size: 13px; }
+
+/* top bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); color: var(--bg); }
+.bar-in { max-width: 1180px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.brand { font: 750 17px/1 var(--display); font-stretch: 80%; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
+.brand svg { flex: none; }
+.who { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; min-width: 0; }
+.who b { font-weight: 600; } .who span { opacity: .75; }
+.bar .btn-ghost { color: var(--bg); border-color: color-mix(in srgb, var(--bg) 35%, transparent); }
+.tabs { max-width: 1180px; margin: 0 auto; padding: 0 16px; display: flex; gap: 2px; overflow-x: auto; }
+.tabs button, .tabs a { text-decoration: none; display: inline-block; background: none; border: 0; color: var(--bg); opacity: .7; padding: 9px 12px 10px; font-weight: 600; font-size: 14px; border-bottom: 3px solid transparent; white-space: nowrap; cursor: pointer; }
+.tabs button[aria-current="page"], .tabs a[aria-current="page"] { opacity: 1; border-bottom-color: var(--accent); }
+.tabs button .count, .tabs a .count { font: 500 11px var(--mono); background: var(--accent); color: var(--accent-ink); border-radius: 9px; padding: 1px 6px; margin-left: 6px; }
+.notice { max-width: 1148px; margin: 12px auto 0; padding: 10px 14px; border-radius: var(--r); background: var(--warn-soft); color: var(--ink); font-size: 14px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 60px; display: grid; gap: 20px; }
+
+/* panels and grids */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; min-width: 0; }
+.panel > h2 + *, .panel > header + * { margin-top: 12px; }
+.panel header { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; justify-content: space-between; }
+.grid2 { display: grid; gap: 20px; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; }
+.cols { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+@media (max-width: 860px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.page-head { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; justify-content: space-between; }
+.page-head .sub { color: var(--ink-2); margin-top: 4px; }
+
+/* buttons, chips */
+.btn { border: 1px solid var(--line-2); background: var(--surface); border-radius: var(--r); padding: 8px 14px; font-weight: 600; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.btn:hover { border-color: var(--ink-3); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-primary:hover { filter: brightness(1.06); border-color: var(--accent); }
+.btn-ghost { background: transparent; }
+.btn-sm { padding: 4px 10px; font-size: 13px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 12px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.plain::before { display: none; }
+.st-goals, .st-goals_review { background: var(--fleet-soft); color: var(--fleet); }
+.st-self, .st-ack { background: var(--accent-soft); color: var(--accent); }
+.st-appraiser, .st-reviewer, .st-office { background: var(--warn-soft); color: var(--warn); }
+.st-done { background: var(--good-soft); color: var(--good); }
+.lvl { font: 600 11px var(--body); letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line-2); border-radius: 3px; padding: 1px 6px; color: var(--ink-2); }
+
+/* forms */
+label.f { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+input[type=text], input[type=password], input[type=number], select, textarea { background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--r); padding: 8px 10px; width: 100%; min-width: 0; font-weight: 400; color: var(--ink); }
+textarea { min-height: 64px; resize: vertical; }
+input.w { width: 70px; text-align: right; font-family: var(--mono); }
+.err { color: var(--crit); }
+.checks { display: grid; gap: 4px; font-size: 13px; padding: 0; margin: 0; list-style: none; }
+.checks li { display: flex; gap: 8px; align-items: baseline; }
+.checks li::before { content: "✓"; color: var(--good); font-weight: 700; width: 12px; flex: none; }
+.checks li.bad::before { content: "•"; color: var(--crit); }
+.checks li.bad { color: var(--crit); }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font: 600 11px/1.3 var(--body); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); padding: 8px 10px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr.click { cursor: pointer; } tr.click:hover td { background: var(--surface-2); }
+td.r, th.r { text-align: right; }
+tr.me td { background: var(--accent-soft); }
+
+/* goal cards */
+.goal { border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 10px; background: var(--surface); }
+.goal + .goal { margin-top: 10px; }
+.goal-top { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+.goal-title { font-weight: 700; font-size: 15px; }
+.goal-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+.cat { font: 600 11px var(--body); letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); }
+.cat.Safety { background: var(--crit-soft); color: var(--crit); }
+.goal-edit { display: grid; gap: 8px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 90px auto; align-items: end; }
+.goal-edit .t2 { grid-column: 1 / -1; }
+@media (max-width: 640px) { .goal-edit { grid-template-columns: minmax(0, 1fr) 90px; } .goal-edit .catf { grid-column: 1 / -1; } }
+.rate { display: flex; gap: 4px; flex-wrap: wrap; }
+.rate button { width: 40px; height: 36px; border: 1px solid var(--line-2); background: var(--surface); border-radius: var(--r); font: 600 15px var(--mono); cursor: pointer; }
+.rate button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.rate-lbl { font-size: 13px; color: var(--ink-2); min-height: 18px; }
+.rate-row { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 640px) { .rate-row { grid-template-columns: minmax(0, 1fr); } }
+.who-rated { font: 600 11px var(--body); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
+.pill5 { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.pill5 b { font: 600 14px var(--mono); width: 26px; height: 26px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--surface-2); }
+.pill5.s b { background: var(--accent-soft); color: var(--accent); }
+.pill5.m b { background: var(--fleet-soft); color: var(--fleet); }
+
+/* stepper */
+ol.steps { list-style: none; padding: 0; margin: 0; }
+.crumbs { font-size: 13px; color: var(--ink-3); margin: 0 0 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+.crumbs a { color: inherit; }
+.crumbs span[aria-current] { color: var(--ink); font-weight: 600; }
+.steps { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+.step { border-top: 4px solid var(--line); padding-top: 6px; font-size: 12px; color: var(--ink-3); min-width: 0; }
+.step b { display: block; color: var(--ink-2); font-size: 12px; }
+.step.done { border-top-color: var(--good); }
+.step.now { border-top-color: var(--accent); color: var(--ink); }
+.step.now b { color: var(--accent); }
+.step.skip { opacity: .45; }
+@media (max-width: 760px) { .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 10px; } }
+
+/* score tiles */
+.tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.tile .big { font: 700 30px/1.1 var(--display); font-stretch: 85%; font-variant-numeric: tabular-nums; }
+.tile .big small { font-size: 15px; color: var(--ink-3); font-weight: 600; }
+.tile.hl { border-color: var(--accent); }
+
+/* login */
+#app { min-height: 100vh; min-height: 100dvh; }
+.login { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
+.login-side { background: var(--ink); color: var(--bg); padding: 40px 36px; display: grid; align-content: space-between; gap: 30px; position: relative; overflow: hidden; }
+.login-side h1 { font-size: 40px; font-stretch: 78%; letter-spacing: .01em; }
+.login-side p { opacity: .8; max-width: 38ch; margin-top: 12px; }
+.login-side .scale { display: grid; gap: 6px; font-size: 13px; }
+.login-side .scale div { display: flex; gap: 10px; align-items: center; }
+.login-side .scale b { font: 600 13px var(--mono); width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid color-mix(in srgb, var(--bg) 40%, transparent); border-radius: 50%; }
+.login-main { padding: 36px 32px; display: grid; gap: 22px; align-content: start; max-width: 720px; }
+.login-form { display: grid; gap: 12px; max-width: 380px; }
+.acct-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.acct { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 10px 12px; cursor: pointer; display: grid; gap: 2px; }
+.acct:hover { border-color: var(--accent); }
+.acct .role { font: 600 11px var(--body); letter-spacing: .07em; text-transform: uppercase; color: var(--accent); }
+.acct .nm { font-weight: 700; }
+.acct .meta { font-size: 12px; color: var(--ink-3); font-family: var(--mono); }
+@media (max-width: 820px) { .login { grid-template-columns: minmax(0, 1fr); } .login-side { padding: 28px 16px; } .login-side h1 { font-size: 32px; } .login-main { padding: 24px 16px; } }
+
+/* charts */
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { font-family: var(--body); }
+@media (max-width: 700px) { .chart.box { min-width: 620px; } .chart.cat { min-width: 440px; } }
+.chart .tick { fill: var(--ink-3); font-size: 11px; font-family: var(--mono); }
+.chart .lbl { fill: var(--ink); font-size: 13px; }
+.chart .lbl2 { fill: var(--ink-3); font-size: 11px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.tip { position: fixed; pointer-events: none; z-index: 50; background: var(--ink); color: var(--bg); font-size: 12px; padding: 7px 9px; border-radius: 4px; max-width: 260px; line-height: 1.4; }
+.hbar { height: 10px; border-radius: 0 3px 3px 0; background: var(--fleet); }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: var(--r); font-size: 14px; z-index: 60; max-width: calc(100% - 32px); }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 13px; }
+.timeline li { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 10px; }
+.timeline .d { font-family: var(--mono); color: var(--ink-3); }
+.empty { padding: 28px; text-align: center; color: var(--ink-2); }
+.confirm { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: var(--r); padding: 12px; display: grid; gap: 10px; }
+.filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.filters label.f { min-width: 140px; }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 14px; }
+.kv dt { color: var(--ink-3); } .kv dd { margin: 0; }
+.funnel { display: grid; gap: 6px; }
+.funnel div { display: grid; grid-template-columns: 150px minmax(0, 1fr) 36px; gap: 10px; align-items: center; font-size: 13px; }
+.funnel .track { background: var(--surface-2); border-radius: 3px; height: 14px; }
+.funnel .fill { height: 14px; border-radius: 0 3px 3px 0; background: var(--fleet); }
+@media (prefers-reduced-motion: no-preference) { .wrap > * { animation: rise .25s ease-out both; } @keyframes rise { from { transform: translateY(4px); } to { transform: none; } } }
+</style>
+<div id="app"></div>
+<script>
+/* ===== Reference data: ranks, approval levels, goal templates ===== */
+const YEAR = 2026;
+const CATS = ["Safety", "Operations", "Compliance", "Teamwork", "Development", "Conduct"];
+const SCALE = [
+  { v: 1, label: "Unsatisfactory", short: "Unsatisfactory" },
+  { v: 2, label: "Needs improvement", short: "Needs impr." },
+  { v: 3, label: "Meets expectations", short: "Meets" },
+  { v: 4, label: "Exceeds expectations", short: "Exceeds" },
+  { v: 5, label: "Outstanding", short: "Outstanding" }
+];
+// appraiser = level 2, reviewer = level 3 (countersign), office approval = level 4 (Crewing Manager)
+const RANKS = {
+  MST: { name: "Master", dept: "Deck", level: "Officer", appr: "MSUPT", rev: null, next: null },
+  CO: { name: "Chief Officer", dept: "Deck", level: "Officer", appr: "MST", rev: "MSUPT", next: "MST" },
+  "2O": { name: "Second Officer", dept: "Deck", level: "Officer", appr: "CO", rev: "MST", next: "CO" },
+  "3O": { name: "Third Officer", dept: "Deck", level: "Officer", appr: "CO", rev: "MST", next: "2O" },
+  CE: { name: "Chief Engineer", dept: "Engine", level: "Officer", appr: "MST", rev: "TSUPT", next: null },
+  "2E": { name: "Second Engineer", dept: "Engine", level: "Officer", appr: "CE", rev: "MST", next: "CE" },
+  "3E": { name: "Third Engineer", dept: "Engine", level: "Officer", appr: "CE", rev: "MST", next: "2E" },
+  "4E": { name: "Fourth Engineer", dept: "Engine", level: "Officer", appr: "CE", rev: "MST", next: "3E" },
+  ETO: { name: "Electro-Technical Officer", dept: "Engine", level: "Officer", appr: "CE", rev: "MST", next: null },
+  DCD: { name: "Deck Cadet", dept: "Deck", level: "Non-Officer", appr: "CO", rev: "MST", next: "3O" },
+  BSN: { name: "Bosun", dept: "Deck", level: "Non-Officer", appr: "CO", rev: "MST", next: null },
+  AB: { name: "Able Seaman", dept: "Deck", level: "Non-Officer", appr: "CO", rev: "MST", next: "BSN" },
+  OS: { name: "Ordinary Seaman", dept: "Deck", level: "Non-Officer", appr: "CO", rev: "MST", next: "AB" },
+  FTR: { name: "Fitter", dept: "Engine", level: "Non-Officer", appr: "CE", rev: "MST", next: null },
+  OLR: { name: "Oiler", dept: "Engine", level: "Non-Officer", appr: "CE", rev: "MST", next: "FTR" },
+  CCK: { name: "Chief Cook", dept: "Catering", level: "Non-Officer", appr: "MST", rev: null, next: null },
+  MSM: { name: "Messman", dept: "Catering", level: "Non-Officer", appr: "CCK", rev: "MST", next: "CCK" }
+};
+const RANK_ORDER = ["MST", "CO", "2O", "3O", "CE", "2E", "3E", "4E", "ETO", "DCD", "BSN", "AB", "OS", "FTR", "OLR", "CCK", "MSM"];
+const OFFICE = {
+  MSUPT: { name: "Capt. Neil Fernandes", title: "Marine Superintendent" },
+  TSUPT: { name: "Priya Nair", title: "Technical Superintendent" },
+  CREWING: { name: "Farah Khan", title: "Crewing Manager" }
+};
+const VESSELS = [
+  { id: "V1", name: "MV Coral Meridian", type: "Bulk carrier" },
+  { id: "V2", name: "MT Aegean Dawn", type: "Product tanker" },
+  { id: "V3", name: "MV Saffron Bay", type: "Container ship" },
+  { id: "V4", name: "MT Nordic Tern", type: "Chemical tanker" },
+  { id: "V5", name: "MV Konkan Pearl", type: "Bulk carrier" },
+  { id: "V6", name: "MV Lagos Spirit", type: "Container ship" }
+];
+const TEMPLATES = {
+  Officer: [
+    { title: "Lead safe operations in my department", category: "Safety", target: "Zero lost-time injuries; 100% drills and toolbox talks; permits to work closed correctly", weight: 25 },
+    { title: "Clean inspections", category: "Compliance", target: "No PSC, vetting or audit findings in my area of responsibility", weight: 20 },
+    { title: "Planned work on time", category: "Operations", target: "100% of PMS jobs (engine) or voyage and cargo plans (deck) done on time", weight: 20 },
+    { title: "Lead and develop the team", category: "Teamwork", target: "Familiarisation and on-board training complete for every junior I supervise", weight: 15 },
+    { title: "My own development", category: "Development", target: "All assigned CBTs complete; one competence course before next contract", weight: 20 }
+  ],
+  "Non-Officer": [
+    { title: "Work safely", category: "Safety", target: "Zero injuries; PPE and permit to work always followed; 100% drill attendance", weight: 30 },
+    { title: "Assigned work done well", category: "Operations", target: "PMS jobs and daily work orders done on time and to standard", weight: 30 },
+    { title: "Reliable and disciplined", category: "Conduct", target: "No warnings; work and rest hours recorded accurately", weight: 20 },
+    { title: "Keep learning", category: "Development", target: "Assigned CBTs and training record book tasks complete", weight: 20 }
+  ]
+};
+const GOAL_LIBRARY = [
+  { title: "Mooring operations without incident", category: "Safety", target: "Zero mooring incidents; snap-back zones briefed before every operation", for: "Deck" },
+  { title: "Enclosed space entry done right", category: "Safety", target: "100% entries with permit, gas test and rescue team ready", for: "All" },
+  { title: "Cargo operations without claims", category: "Operations", target: "No cargo damage or shortage claims; stability checked every stage", for: "Deck" },
+  { title: "Bunkering without spills", category: "Operations", target: "Zero spills; checklist and soundings complete for every bunkering", for: "Engine" },
+  { title: "Fuel efficiency", category: "Operations", target: "Main engine fuel consumption within 2% of the performance curve", for: "Engine" },
+  { title: "Navigation records in order", category: "Compliance", target: "ECDIS, passage plans and log books 100% compliant at every audit", for: "Deck" },
+  { title: "Environmental records in order", category: "Compliance", target: "Oil Record Book and Garbage Record Book with no findings", for: "All" },
+  { title: "Mentor a cadet", category: "Teamwork", target: "Cadet's training record book tasks for this period signed off", for: "Officer" },
+  { title: "Speak up for safety", category: "Teamwork", target: "At least one near-miss or improvement report each month", for: "All" },
+  { title: "Galley hygiene", category: "Compliance", target: "No findings in Master's weekly galley and provisions inspection", for: "Catering" },
+  { title: "Food within budget", category: "Operations", target: "Victualling within the daily allowance; crew satisfaction 4 of 5 or better", for: "Catering" },
+  { title: "Prepare for promotion", category: "Development", target: "Complete the next-rank familiarisation and a competency check with the HOD", for: "All" },
+  { title: "Rest-hour compliance", category: "Conduct", target: "No MLC rest-hour non-conformities", for: "All" }
+];
+const TRAINING = ["Bridge Resource Management", "Engine Room Resource Management", "ECDIS type-specific", "Leadership & Managerial Skills", "Advanced fire fighting refresher", "Behavioural safety workshop", "Maritime English", "Food safety & hygiene", "Cargo handling & stability", "High-voltage safety", "Enclosed space entry & rescue", "Mooring safety"];
+const STAGES = [
+  { id: "goals", name: "Goal setting", short: "Goals" },
+  { id: "goals_review", name: "Goal agreement", short: "Agree goals" },
+  { id: "self", name: "Self-evaluation", short: "Self" },
+  { id: "appraiser", name: "Appraiser evaluation", short: "Appraiser" },
+  { id: "ack", name: "Seafarer acknowledgement", short: "Acknowledge" },
+  { id: "reviewer", name: "Countersign", short: "Countersign" },
+  { id: "office", name: "Office approval", short: "Office" },
+  { id: "done", name: "Completed", short: "Done" }
+];
+const resolveRole = (role, vessel) => role ? (OFFICE[role] ? role : `${vessel}-${role}`) : null;
+const STAGE_IDX = Object.fromEntries(STAGES.map((s, i) => [s.id, i]));
+
+/* ===== Deterministic sample generator (shared with the seeding script) ===== */
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gauss(r) { let u = 0, v = 0; while (!u) u = r(); while (!v) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const round2 = x => Math.round(x * 100) / 100;
+
+const FIRST = ["Rahul", "Arjun", "Vikram", "Joseph", "Mark", "Rogelio", "Jerome", "Andriy", "Oleksandr", "Ivan", "Marko", "Ante", "Budi", "Agus", "Kyaw", "Aung", "Sandeep", "Imran", "Thomas", "Mihai", "Dmytro", "Reynaldo", "Noel", "Pradeep", "Suresh", "Anil", "Ricardo", "Tomislav", "Hendra", "Zaw", "Rohan", "Faizal", "Christian", "Paolo", "Sergiy", "Kevin", "Nikhil", "Edwin", "Ramon", "Luka"];
+const LAST = ["Mehta", "Nair", "Fernandes", "D'Souza", "Santos", "Reyes", "Dela Cruz", "Kovalenko", "Shevchenko", "Horvat", "Novak", "Kusuma", "Wijaya", "Htun", "Min", "Singh", "Khan", "Pereira", "Popescu", "Bondar", "Garcia", "Bautista", "Iyer", "Pillai", "Rao", "Mendoza", "Babic", "Saputra", "Oo", "Kulkarni", "Shaikh", "Lim", "Villanueva", "Melnyk", "Joshi", "Menon", "Castillo", "Perić"];
+
+function sampleFleet() {
+  const r = rng(20260101);
+  const roster = [];
+  const used = new Set();
+  const name = () => { for (;;) { const n = FIRST[Math.floor(r() * FIRST.length)] + " " + LAST[Math.floor(r() * LAST.length)]; if (!used.has(n)) { used.add(n); return n; } } };
+  const positions = ["MST", "CO", "2O", "3O", "CE", "2E", "3E", "4E", "ETO", "DCD", "BSN", "AB", "AB", "OS", "FTR", "OLR", "CCK", "MSM"];
+  for (const v of VESSELS) {
+    let ab = 0;
+    for (const rk of positions) {
+      const id = rk === "AB" ? `${v.id}-AB${++ab}` : `${v.id}-${rk}`;
+      const ability = clamp(3.35 + gauss(r) * 0.55, 1.6, 4.85);
+      roster.push({ id, name: (rk === "MST" ? "Capt. " : "") + name(), rank: rk, vessel: v.id, ability: round2(ability), joined: 2008 + Math.floor(r() * 17) });
+    }
+  }
+  // Fixed demo characters for the walkthrough on MV Coral Meridian
+  const fix = { "V1-MST": "Capt. Arvind Rao", "V1-CO": "Rahul Mehta", "V1-2O": "Joseph Santos", "V1-3O": "Andriy Kovalenko", "V1-CE": "Marko Horvat", "V1-AB1": "Budi Kusuma", "V1-BSN": "Rogelio Reyes", "V1-CCK": "Noel Bautista" };
+  for (const p of roster) if (fix[p.id]) p.name = fix[p.id];
+  const findP = id => roster.find(p => p.id === id);
+  findP("V1-2O").ability = 3.85; findP("V1-AB1").ability = 3.2; findP("V1-3O").ability = 3.0;
+
+  const hist = {}; // last year's completed results
+  const apps = [];
+  const rate = (base, cat) => clamp(Math.round(base + gauss(r) * 0.6 + (cat === "Safety" ? 0.15 : 0)), 1, 5);
+  for (const p of roster) {
+    const rk = RANKS[p.rank];
+    const tpl = TEMPLATES[rk.level];
+    // 2025 history (completed)
+    const ab25 = p.ability - 0.1 + gauss(r) * 0.2;
+    const cats = {};
+    let tot = 0;
+    for (const g of tpl) { const v = rate(ab25, g.category); cats[g.category] = v; tot += v * g.weight; }
+    hist[p.id] = { overall: round2(tot / 100), cats, decision: tot / 100 < 2.5 ? "Approved with reservations" : "Approved" };
+    apps.push(sampleApp(p, r, rate));
+  }
+  return { roster, hist, apps };
+}
+
+function stagePick(p, r) {
+  const forced = { "V1-2O": "self", "V1-AB1": "goals", "V1-3O": "appraiser", "V1-BSN": "reviewer", "V1-CO": "appraiser", "V1-CE": "reviewer", "V1-MST": "self", "V1-CCK": "office", "V1-OS": "goals_review", "V1-2E": "ack" };
+  if (forced[p.id]) return forced[p.id];
+  const x = r();
+  if (x < 0.06) return "goals";
+  if (x < 0.12) return "goals_review";
+  if (x < 0.26) return "self";
+  if (x < 0.40) return "appraiser";
+  if (x < 0.50) return "ack";
+  if (x < 0.60) return "reviewer";
+  if (x < 0.70) return "office";
+  return "done";
+}
+
+function sampleApp(p, r, rate) {
+  const rk = RANKS[p.rank];
+  const stage = stagePick(p, r);
+  const si = STAGE_IDX[stage];
+  const goals = TEMPLATES[rk.level].map((g, i) => ({ id: "g" + (i + 1), ...g, self: null, selfNote: "", mgr: null, mgrNote: "" }));
+  if (rk.dept === "Catering" && rk.level === "Non-Officer") { goals[1] = { ...goals[1], title: "Galley and mess run well", target: "Meals on time; no findings in galley inspections; victualling within allowance" }; }
+  const d = (m, day) => `${YEAR}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const a = { id: `A${YEAR}-${p.id}`, personId: p.id, year: YEAR, rank: p.rank, vessel: p.vessel, level: rk.level, stage, goals, selfSummary: { achievements: "", challenges: "", support: "" }, appraiser: null, ack: null, reviewer: null, office: null, history: [], updated: "" };
+  const H = (on, by, action, note) => a.history.push({ on, by, action, note: note || "" });
+  H(d(1, 2), "SYSTEM", "Appraisal opened for " + YEAR);
+  if (si >= 1) H(d(1, 9 + Math.floor(r() * 10)), p.id, "Submitted goals for agreement");
+  if (si >= 2) H(d(1, 20 + Math.floor(r() * 10)), resolveRole(rk.appr, p.vessel), "Agreed goals");
+  if (si >= 3) {
+    for (const g of a.goals) { const m = rate(p.ability, g.category); g.self = clamp(Math.round(m + 0.25 + gauss(r) * 0.5), 1, 5); g.selfNote = g.self >= 5 || g.self <= 2 ? selfNoteFor(g.self, r) : (r() < 0.5 ? selfNoteFor(g.self, r) : ""); g._m = m; }
+    a.selfSummary = { achievements: pick(r, ACHIEVE), challenges: pick(r, CHALL), support: pick(r, SUPPORT) };
+    H(d(6 + Math.floor(r() * 3), 1 + Math.floor(r() * 25)), p.id, "Submitted self-evaluation");
+  }
+  if (si >= 4) {
+    for (const g of a.goals) { g.mgr = g._m; g.mgrNote = g.mgr >= 5 || g.mgr <= 2 ? noteFor(g, g.mgr, r) : (r() < 0.6 ? noteFor(g, g.mgr, r) : ""); }
+    const ov = overall(a.goals, "mgr");
+    const saf = a.goals.find(g => g.category === "Safety").mgr;
+    const low = a.goals.some(g => g.mgr <= 2);
+    a.appraiser = {
+      strengths: pick(r, STRENGTHS), improvements: pick(r, IMPROVE),
+      rehire: ov < 2.5 || saf <= 2 ? "With reservations" : "Recommended",
+      promotion: rk.next && ov >= 3.8 && saf >= 4 ? "Ready now" : (rk.next ? (ov >= 3.2 ? "Ready next year" : "Not yet ready") : "Not applicable"),
+      training: low ? [TRAINING[Math.floor(r() * TRAINING.length)]] : [], comment: ""
+    };
+    H(d(9, 1 + Math.floor(r() * 20)), resolveRole(rk.appr, p.vessel), "Submitted appraiser evaluation", "Overall " + ov.toFixed(2));
+  }
+  if (si >= 5) { a.ack = { agree: r() > 0.12, comment: "" }; if (!a.ack.agree) a.ack.comment = "I believe the Safety rating does not reflect the drills I led after the PSC visit."; H(d(9, 22 + Math.floor(r() * 6)), p.id, a.ack.agree ? "Acknowledged and agreed" : "Acknowledged and disagreed", a.ack.comment); }
+  if (si >= 6 && rk.rev) { a.reviewer = { comment: r() < 0.4 ? "Fair and well evidenced." : "" }; H(d(9, 28), resolveRole(rk.rev, p.vessel), "Countersigned", a.reviewer.comment); }
+  if (si >= 7) { const ov = overall(a.goals, "mgr"); a.office = { decision: ov < 2.5 ? "Approved with reservations" : "Approved", promotionApproved: a.appraiser.promotion === "Ready now", training: a.appraiser.training, remarks: "" }; H(d(9, 30), "CREWING", "Approved and closed", a.office.decision); }
+  for (const g of a.goals) delete g._m;
+  a.updated = a.history[a.history.length - 1].on;
+  return a;
+}
+const ACHIEVE = ["Led the drill programme after the PSC visit and closed every action within a week.", "Completed all planned maintenance in my area and helped the dry-dock team with the hull survey.", "Took over the cargo plan for three loading ports without any claim.", "Kept my area clean and organised; no findings in the internal audit.", "Finished all CBTs and started my next-rank familiarisation."];
+const CHALL = ["Short port stays made it hard to finish maintenance on time.", "The new ECDIS software took time to learn.", "Two crew changes in one month meant extra training of new joiners.", "Spare parts arrived late for the purifier overhaul.", "Bad weather in the Bay of Bengal delayed deck painting."];
+const SUPPORT = ["Leadership course before my next contract.", "More time with the Chief Officer on cargo calculations.", "Type-specific ECDIS course.", "Hands-on training on the new purifier.", "Guidance on preparing for my next-rank exam."];
+const STRENGTHS = ["Calm under pressure and dependable on watch.", "Strong safety awareness; stops the job when something is wrong.", "Good team player who helps new joiners settle in.", "Thorough with paperwork and records.", "Technically sound and quick to learn."];
+const IMPROVE = ["Plan the day's work earlier and report delays sooner.", "Take more ownership of training juniors.", "Improve accuracy of rest-hour records.", "Speak up more in toolbox talks.", "Keep PMS entries up to date the same day."];
+function selfNoteFor(v, r) {
+  return pick(r, v >= 5 ? ["I went well beyond the target and helped others meet it too.", "No findings at all this year and I led the improvement myself."] : v <= 2 ? ["I fell short here; two items were late at the audit.", "I struggled with this after the crew change and need support."] : ["I met the target throughout the year.", "On target; I closed the few late items quickly."]);
+}
+const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+function noteFor(g, v, r) {
+  const hi = ["Went beyond the target: " + g.target.split(";")[0].toLowerCase() + ", and coached others to do the same.", "Clearly exceeded the target with no findings all year."];
+  const mid = ["Target met consistently.", "Met the target; a couple of late items were closed quickly.", "Steady performance against the target."];
+  const lo = ["Target missed: two items overdue at the internal audit.", "Below target; needed reminders more than once.", "Missed the target after a near miss that was not reported on time."];
+  return pick(r, v >= 5 ? hi : v <= 2 ? lo : mid);
+}
+
+/* ===== Scoring ===== */
+function overall(goals, key) {
+  let s = 0, w = 0;
+  for (const g of goals) if (g[key]) { s += g[key] * g.weight; w += g.weight; }
+  return w ? round2(s / w) : null;
+}
+function band(x) {
+  if (x == null) return null;
+  return x >= 4.5 ? SCALE[4] : x >= 3.5 ? SCALE[3] : x >= 2.5 ? SCALE[2] : x >= 1.5 ? SCALE[1] : SCALE[0];
+}
+function catScores(goals, key) {
+  const out = {};
+  for (const c of CATS) { const gs = goals.filter(g => g.category === c && g[key]); if (gs.length) out[c] = round2(gs.reduce((s, g) => s + g[key] * g.weight, 0) / gs.reduce((s, g) => s + g.weight, 0)); }
+  return out;
+}
+
+/* ===== Sample industry benchmark (illustrative, not real company data) ===== */
+const SAMPLE_COMPANIES = [
+  { name: "Manager A · Singapore", bias: 0.18, sd: 0.48 },
+  { name: "Manager B · Hamburg", bias: 0.05, sd: 0.42 },
+  { name: "Manager C · Mumbai", bias: -0.04, sd: 0.55 },
+  { name: "Manager D · Manila", bias: -0.12, sd: 0.5 },
+  { name: "Manager E · Athens", bias: 0.1, sd: 0.6 }
+];
+function sampleBenchmark() {
+  const r = rng(777);
+  const rows = []; // [company, rank, year, overall, safety, operations, compliance, teamwork, development, conduct]
+  for (const yr of [2025, 2026]) for (const c of SAMPLE_COMPANIES) for (const rk of RANK_ORDER) {
+    const n = 14 + Math.floor(r() * 22);
+    const lvlAdj = RANKS[rk].level === "Officer" ? 0.05 : -0.05;
+    for (let i = 0; i < n; i++) {
+      const base = clamp(3.3 + c.bias + lvlAdj + gauss(r) * c.sd, 1.2, 4.9);
+      const cat = k => { if (RANKS[rk].level === "Officer" ? k === "Conduct" : (k === "Compliance" || k === "Teamwork")) return null; return clamp(Math.round(base + gauss(r) * 0.55), 1, 5); };
+      rows.push([c.name, rk, yr, round2(clamp(base + gauss(r) * 0.12, 1, 5)), ...CATS.map(cat)]);
+    }
+  }
+  return rows;
+}
+
+if (typeof module !== "undefined") module.exports = { sampleFleet, sampleBenchmark, overall, RANKS, TEMPLATES };
+/* ===== State, helpers ===== */
+const API = window.FAD_API || null; // "/api" when served by the .NET application; null in the shareable link
+const S = { user: null, view: { name: "boot", args: [], data: null }, edit: null, open: {}, fleetF: { vessel: "", level: "", stage: "", q: "" }, busy: "", notice: "", errors: null, upload: null, afterLogin: null, loginErr: "", demo: null };
+let renderPending = false;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const today = () => new Date().toISOString().slice(0, 10);
+const fmt = x => x == null ? "–" : Number(x).toFixed(2);
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const fdate = d => d ? `${+d.slice(8, 10)} ${MONTHS[+d.slice(5, 7) - 1]} ${d.slice(0, 4)}` : "";
+const ss = { get(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} } };
+const vesselName = id => (VESSELS.find(v => v.id === id) || {}).name || id || "";
+const rankName = r => (RANKS[r] || {}).name || r;
+function roleOfRank(rank) { return rank === "MST" ? "master" : ["CO", "CE", "CCK"].includes(rank) ? "hod" : "seafarer"; }
+
+/* ===== Mapping between the API (C#) shape and the page's shape ===== */
+const ST_FROM = { Goals: "goals", GoalsReview: "goals_review", Self: "self", Appraiser: "appraiser", Ack: "ack", Reviewer: "reviewer", Office: "office", Done: "done" };
+const ST_TO = Object.fromEntries(Object.entries(ST_FROM).map(([k, v]) => [v, k]));
+const REH = { Recommended: "Recommended", WithReservations: "With reservations", NotRecommended: "Not recommended" };
+const PRO = { ReadyNow: "Ready now", ReadyNextYear: "Ready next year", NotYetReady: "Not yet ready", NotApplicable: "Not applicable" };
+const DEC = { Approved: "Approved", ApprovedWithReservations: "Approved with reservations", NotForRehire: "Not for re-hire" };
+const inv = m => Object.fromEntries(Object.entries(m).map(([k, v]) => [v, k]));
+const REH_TO = inv(REH), PRO_TO = inv(PRO), DEC_TO = inv(DEC);
+const LEVEL_FROM = l => l === "NonOfficer" ? "Non-Officer" : l;
+
+function fromApiSummary(x) {
+  return { id: x.id, personId: x.seafarerId, name: x.name, rank: x.rankCode, rankName: x.rankName, level: LEVEL_FROM(x.level), vessel: x.vesselId, vesselName: x.vesselName,
+    stage: ST_FROM[x.stage], waitingOn: x.waitingOn, waitingOnName: x.waitingOnName, selfOverall: x.selfOverall, apprOverall: x.appraiserOverall, updated: x.updated };
+}
+function fromApiDetail(d) {
+  const as = d.assessment, of = d.office;
+  return {
+    id: d.id, personId: d.seafarerId, year: d.year, rank: d.rankCode, vessel: d.vesselId, level: LEVEL_FROM(d.level), stage: ST_FROM[d.stage],
+    names: d.names || {}, appraiserId: d.appraiserId, reviewerId: d.reviewerId, hasReviewer: d.hasReviewer, nextRank: d.nextRank, waitingOn: d.waitingOn,
+    seesSelf: d.seesSelf, seesAppr: d.seesAppraiser,
+    goals: d.goals.map(g => ({ id: g.id, title: g.title, category: g.category, target: g.target, weight: g.weight, self: g.selfRating ?? null, selfNote: g.selfNote || "", mgr: g.appraiserRating ?? null, mgrNote: g.appraiserNote || "" })),
+    selfSummary: d.selfSummary ? { achievements: d.selfSummary.achievements || "", challenges: d.selfSummary.challenges || "", support: d.selfSummary.support || "" } : { achievements: "", challenges: "", support: "" },
+    appraiser: as ? { strengths: as.strengths || "", improvements: as.improvements || "", rehire: REH[as.rehire] || "", promotion: PRO[as.promotion] || "", training: as.training || [], comment: as.comment || "" } : null,
+    ack: d.ack ? { agree: d.ack.agrees, comment: d.ack.comment || "" } : null,
+    reviewer: d.countersign ? { comment: d.countersign.comment || "" } : null,
+    office: of ? { decision: DEC[of.decision] || "", promotionApproved: !!of.promotionApproved, training: of.training || [], remarks: of.remarks || "" } : null,
+    history: (d.history || []).map(h => ({ on: h.on, by: h.by, action: h.action, note: h.note || "" })), updated: d.updated
+  };
+}
+const toApiGoals = a => ({ goals: a.goals.map(g => ({ id: /^g[\w-]+$/.test(g.id) && !g._new ? g.id : null, title: g.title, category: g.category, target: g.target, weight: +g.weight || 0 })) });
+const toApiRatings = (a, key, note) => a.goals.map(g => ({ goalId: g.id, rating: g[key] || null, note: g[note] || "" }));
+
+/* ===== Backend 1: the .NET API ===== */
+class ApiError extends Error { constructor(status, message, errors) { super(message); this.status = status; this.errors = errors || null; } }
+async function http(method, path, body, raw) {
+  let res;
+  try {
+    res = await fetch(API + path, { method, credentials: "same-origin", headers: body !== undefined ? { "Content-Type": raw ? "text/csv" : "application/json" } : {}, body: body === undefined ? undefined : raw ? body : JSON.stringify(body) });
+  } catch (e) { throw new ApiError(0, "Can't reach the server. Check your connection and try again."); }
+  const txt = await res.text();
+  let j = null; try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
+  if (!res.ok) {
+    if (res.status === 401 && path !== "/auth/login" && path !== "/auth/me") onSignedOut();
+    throw new ApiError(res.status, (j && j.message) || `The server answered ${res.status}.`, j && j.errors);
+  }
+  return j;
+}
+const ApiBackend = {
+  kind: "api",
+  async me() { try { const m = await http("GET", "/auth/me"); return m; } catch (e) { if (e.status === 401) return null; throw e; } },
+  async login(id, pw) { const r = await http("POST", "/auth/login", { userId: id, password: pw }); return Object.assign({}, r.user, { mustChange: !!r.mustChangePassword }); },
+  async logout() { try { await http("POST", "/auth/logout", {}); } catch (e) {} },
+  async demoAccounts() { try { return await http("GET", "/auth/demo-accounts"); } catch (e) { return []; } },
+  async changePassword(cur, nw) { return http("POST", "/auth/change-password", { current: cur, new: nw }); },
+  async worklist() { return (await http("GET", "/worklist")).map(w => ({ action: w.action, a: fromApiSummary(w.appraisal) })); },
+  async list(scope) { return (await http("GET", "/appraisals" + (scope ? "?scope=" + scope : ""))).map(fromApiSummary); },
+  async get(id) { return fromApiDetail(await http("GET", "/appraisals/" + encodeURIComponent(id))); },
+  async act(id, kind, a, extra) {
+    const p = "/appraisals/" + encodeURIComponent(id);
+    const go = async (m, path, body) => fromApiDetail(await http(m, p + path, body));
+    switch (kind) {
+      case "save": if (extra === "goals") return go("PUT", "/goals", toApiGoals(a)); if (extra === "self") return go("PUT", "/self", { ratings: toApiRatings(a, "self", "selfNote"), summary: a.selfSummary }); return go("PUT", "/evaluation", { ratings: toApiRatings(a, "mgr", "mgrNote"), assessment: assessmentToApi(a.appraiser) });
+      case "submitGoals": await go("PUT", "/goals", toApiGoals(a)); return go("POST", "/goals/submit", {});
+      case "agreeGoals": await go("PUT", "/goals", toApiGoals(a)); return go("POST", "/goals/agree", {});
+      case "retGoals": return go("POST", "/goals/return", { remark: extra });
+      case "submitSelf": await go("PUT", "/self", { ratings: toApiRatings(a, "self", "selfNote"), summary: a.selfSummary }); return go("POST", "/self/submit", {});
+      case "submitMgr": await go("PUT", "/evaluation", { ratings: toApiRatings(a, "mgr", "mgrNote"), assessment: assessmentToApi(a.appraiser) }); return go("POST", "/evaluation/submit", {});
+      case "retSelf": return go("POST", "/evaluation/return", { remark: extra });
+      case "submitAck": return go("POST", "/acknowledge", { agrees: !!a.ack.agree, comment: a.ack.comment || "" });
+      case "countersign": return go("POST", "/countersign", { comment: (a.reviewer && a.reviewer.comment) || "" });
+      case "retAppr": return go("POST", "/return-to-appraiser", { remark: extra });
+      case "approve": return go("POST", "/approve", { decision: DEC_TO[a.office.decision] || null, promotionApproved: !!a.office.promotionApproved, training: a.office.training, remarks: a.office.remarks || "" });
+    }
+    throw new Error("Unknown action " + kind);
+  },
+  async people() { return (await http("GET", "/people")).map(p => ({ id: p.id, name: p.name, rank: p.rankCode, rankName: p.rankName, vessel: p.vesselId, vesselName: p.vesselName })); },
+  async compare(pid, yr) { return http("GET", `/compare/${encodeURIComponent(pid)}?year=${yr}`); },
+  async fleetVsIndustry(yr) { return http("GET", `/compare/fleet-vs-industry?year=${yr}`); },
+  async dashboard() { return http("GET", "/dashboard"); },
+  async bench() { return http("GET", "/benchmark"); },
+  async parseBench(text, name) { return { name, text, preview: parseBench(text, name) }; },
+  async saveBench(up, source) { return http("POST", "/benchmark?source=" + encodeURIComponent(source), up.text, true); },
+  async resetBench() { return http("DELETE", "/benchmark"); },
+  async resetDemo() { return http("POST", "/admin/reset-demo", {}); }
+};
+function assessmentToApi(p) { return p ? { strengths: p.strengths, improvements: p.improvements, rehire: REH_TO[p.rehire] || null, promotion: PRO_TO[p.promotion] || null, training: p.training || [], comment: p.comment || "" } : null; }
+
+/* ===== Backend 2: in the browser (shareable link), using the page's shared storage ===== */
+const L = { mode: "connecting", roster: null, hist: null, apps: {}, bench: null, benchMeta: null, loaded: {} };
+let DB = null, SAMPLE_BENCH = null;
+const writeQ = {};
+function benchRows() { if (L.bench) return L.bench; if (!SAMPLE_BENCH) SAMPLE_BENCH = sampleBenchmark(); return SAMPLE_BENCH; }
+function personL(id) { if (OFFICE[id]) return { id, name: OFFICE[id].name, title: OFFICE[id].title, office: true }; const p = (L.roster || []).find(x => x.id === id); return p ? { ...p, title: RANKS[p.rank].name } : null; }
+const nameL = id => (personL(id) || {}).name || (id === "SYSTEM" ? "System" : id || "");
+const appraiserOf = a => resolveRole(RANKS[a.rank].appr, a.vessel);
+const reviewerOf = a => resolveRole(RANKS[a.rank].rev, a.vessel);
+function actorFor(a) { switch (a.stage) { case "goals": case "self": case "ack": return a.personId; case "goals_review": case "appraiser": return appraiserOf(a); case "reviewer": return reviewerOf(a); case "office": return "CREWING"; default: return null; } }
+function roleOf(uid) { if (OFFICE[uid]) return uid === "CREWING" ? "crewing" : "supt"; const p = personL(uid); return p ? roleOfRank(p.rank) : "seafarer"; }
+function canViewL(uid, a) { return !!OFFICE[uid] || a.personId === uid || appraiserOf(a) === uid || reviewerOf(a) === uid || uid === a.vessel + "-MST"; }
+function inScopeL(uid, a) { if (OFFICE[uid]) return true; if (a.personId === uid) return false; if (roleOf(uid) === "master") return a.vessel === personL(uid).vessel; return appraiserOf(a) === uid || reviewerOf(a) === uid; }
+const seesSelfL = (uid, a) => uid === a.personId || STAGE_IDX[a.stage] >= STAGE_IDX.appraiser;
+const seesApprL = (uid, a) => STAGE_IDX[a.stage] >= STAGE_IDX.ack || (a.stage === "appraiser" && uid === appraiserOf(a));
+function summaryL(a, uid) {
+  const w = actorFor(a);
+  return { id: a.id, personId: a.personId, name: nameL(a.personId), rank: a.rank, rankName: rankName(a.rank), level: a.level, vessel: a.vessel, vesselName: vesselName(a.vessel), stage: a.stage, waitingOn: w, waitingOnName: w ? nameL(w) : "",
+    selfOverall: STAGE_IDX[a.stage] >= STAGE_IDX.appraiser && seesSelfL(uid, a) ? overall(a.goals, "self") : null, apprOverall: seesApprL(uid, a) ? overall(a.goals, "mgr") : null, updated: a.updated };
+}
+function detailL(a, uid) {
+  const d = clone(a); const ids = [a.personId, appraiserOf(a), reviewerOf(a), actorFor(a), "CREWING", ...a.history.map(h => h.by)].filter(Boolean);
+  d.names = Object.fromEntries(ids.map(i => [i, nameL(i)])); d.appraiserId = appraiserOf(a); d.reviewerId = reviewerOf(a); d.hasReviewer = !!RANKS[a.rank].rev; d.nextRank = RANKS[a.rank].next; d.waitingOn = actorFor(a);
+  d.seesSelf = seesSelfL(uid, a); d.seesAppr = seesApprL(uid, a);
+  if (!d.seesSelf) d.goals.forEach(g => { g.self = null; g.selfNote = ""; });
+  if (!d.seesAppr) d.goals.forEach(g => { g.mgr = null; g.mgrNote = ""; });
+  return d;
+}
+function scoreOfL(pid, yr) {
+  if (yr === 2025) { const h = (L.hist || {})[pid]; return h ? { overall: h.overall, cats: h.cats, self: null } : null; }
+  const a = L.apps[`A${yr}-${pid}`]; if (!a || STAGE_IDX[a.stage] < STAGE_IDX.ack) return null;
+  return { overall: overall(a.goals, "mgr"), cats: catScores(a.goals, "mgr"), self: overall(a.goals, "self") };
+}
+const sortN = xs => xs.slice().sort((a, b) => a - b);
+function quant(sorted, p) { if (!sorted.length) return null; const i = (sorted.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo); }
+function others(vals, x) { const i = vals.indexOf(x); return i < 0 ? vals : vals.slice(0, i).concat(vals.slice(i + 1)); }
+const higherThan = (vals, x) => vals.length ? Math.round(vals.filter(v => v < x).length / vals.length * 100) : null;
+const pctRank = (vals, x) => vals.length ? Math.round((vals.filter(v => v < x).length + vals.filter(v => v === x).length / 2) / vals.length * 100) : null;
+function dist(label, kind, vals, me, includesMe) { const s = sortN(vals); return { label, kind, n: s.length, p10: quant(s, .1), p25: quant(s, .25), p50: quant(s, .5), p75: quant(s, .75), p90: quant(s, .9), higherThanPct: me == null ? null : higherThan(includesMe ? others(vals, me) : vals, me) }; }
+function compareL(pid, yr, uid) {
+  const p = personL(pid), rk = p.rank, me = scoreOfL(pid, yr);
+  const fleet = L.roster.filter(x => x.rank === rk).map(x => ({ p: x, s: scoreOfL(x.id, yr) })).filter(x => x.s);
+  const rows = benchRows().filter(r => r[1] === rk && r[2] === yr);
+  const comps = [...new Set(rows.map(r => r[0]))];
+  const fv = fleet.map(x => x.s.overall), pool = rows.map(r => r[3]).concat(fv);
+  const m = me ? me.overall : null, fO = m == null ? fv : others(fv, m), iO = m == null ? pool : others(pool, m);
+  const avg = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+  const cats = CATS.filter(c => (me && me.cats[c] != null) || fleet.some(x => x.s.cats[c] != null)).map(c => ({ category: c, person: me && me.cats[c] != null ? me.cats[c] : null,
+    fleetAverage: avg(fleet.map(x => x.s.cats[c]).filter(v => v != null)), industryAverage: avg(rows.map(r => r[4 + CATS.indexOf(c)]).filter(v => v != null)) }));
+  const anon = roleOf(uid) === "seafarer";
+  const ranking = fleet.slice().sort((a, b) => b.s.overall - a.s.overall || a.p.id.localeCompare(b.p.id)).map((x, i) => { const hide = anon && x.p.id !== pid; return { position: i + 1, id: hide ? null : x.p.id, name: hide ? null : x.p.name, vesselName: hide ? null : vesselName(x.p.vessel), overall: x.s.overall, isPerson: x.p.id === pid }; });
+  return {
+    result: { seafarerId: pid, rankCode: rk, year: yr, overall: m, band: m == null ? null : band(m).label, selfOverall: me ? me.self : null,
+      fleetRank: m == null ? null : fv.filter(v => v > m).length + 1, fleetRated: fv.length, fleetOthers: fO.length, higherThanPctOfFleet: m == null || !fO.length ? null : higherThan(fO, m),
+      tiesInFleet: m == null ? 0 : fO.filter(v => v === m).length, smallGroup: fO.length < 4, industryPercentile: m == null || !iO.length ? null : pctRank(iO, m), industryOthers: iO.length, industryRated: pool.length,
+      companies: comps.length + 1, distributions: [dist("Our fleet", "fleet", fv, m, true), ...comps.map(c => dist(c, "company", rows.filter(r => r[0] === c).map(r => r[3]), m, false)), dist("All companies", "all", pool, m, true)],
+      categories: cats, source: L.benchMeta ? { source: L.benchMeta.source, uploaded: L.benchMeta.uploaded, isSample: false, rows: L.benchMeta.rowCount } : { source: "Sample benchmark: 5 fictional ship managers (illustrative, not real company data)", isSample: true, rows: benchRows().length } },
+    name: p.name, rankName: RANKS[rk].name, ranking, hasPreviousYear: !!scoreOfL(pid, yr - 1)
+  };
+}
+const LocalBackend = {
+  kind: "local",
+  ready: null,
+  async me() { await this.ready; const id = ss.get("fad-user"); return id && (OFFICE[id] || personL(id)) ? meL(id) : null; },
+  async login(id, pw) {
+    await this.ready; id = (id || "").trim().toUpperCase();
+    if (!(OFFICE[id] || personL(id))) throw new ApiError(401, "We don't recognise that Crew ID. Try V1-2O, or pick a demo account.");
+    if (pw !== "demo") throw new ApiError(401, "Wrong password. The demo password is demo.");
+    ss.set("fad-user", id); return meL(id);
+  },
+  async logout() { ss.set("fad-user", null); },
+  async demoAccounts() { await this.ready; return DEMO_IDS.map(id => { const own = L.apps[`A${YEAR}-${id}`]; return { id, name: nameL(id), title: (personL(id) || {}).title, role: roleOf(id), ownStage: own ? ST_TO[own.stage] : null, ownIsMine: own ? actorFor(own) === id : false, waiting: Object.values(L.apps).filter(a => a.personId !== id && actorFor(a) === id).length }; }); },
+  async changePassword() { throw new ApiError(400, "Passwords can only be changed in the server version of the app."); },
+  async worklist() { const u = S.user.id; return Object.values(L.apps).filter(a => actorFor(a) === u).sort((a, b) => STAGE_IDX[b.stage] - STAGE_IDX[a.stage]).map(a => ({ action: actionLabel(a.stage), a: summaryL(a, u) })); },
+  async list(scope) { const u = S.user.id; return Object.values(L.apps).filter(a => scope === "mine" ? a.personId === u : inScopeL(u, a)).sort((a, b) => a.vessel.localeCompare(b.vessel) || RANK_ORDER.indexOf(a.rank) - RANK_ORDER.indexOf(b.rank) || a.personId.localeCompare(b.personId)).map(a => summaryL(a, u)); },
+  async get(id) { const a = L.apps[id]; if (!a) throw new ApiError(404, "That appraisal doesn't exist."); if (!canViewL(S.user.id, a)) throw new ApiError(403, "You can't view this appraisal."); return detailL(a, S.user.id); },
+  async act(id, kind, a, extra) {
+    const live = L.apps[id]; const u = S.user.id;
+    const errs = checksForKind(kind, a);
+    if (errs.length) throw new ApiError(422, "Some items still need attention.", errs);
+    const next = clone(live);
+    const H = (action, note) => next.history.push({ on: today(), by: u, action, note: note || "" });
+    if (kind === "save") { if (extra === "goals") next.goals = clone(a.goals); else if (extra === "self") { next.goals = mergeRatings(next.goals, a.goals, "self", "selfNote"); next.selfSummary = clone(a.selfSummary); } else { next.goals = mergeRatings(next.goals, a.goals, "mgr", "mgrNote"); next.appraiser = clone(a.appraiser); } }
+    else if (kind.startsWith("ret")) {
+      if (!(extra || "").trim()) throw new ApiError(422, "Some items still need attention.", ["BR-14: Say what needs to change before sending it back."]);
+      H(kind === "retAppr" ? "Sent back to the appraiser" : "Sent back to the seafarer", extra.trim());
+      if (kind === "retAppr") { next.ack = null; next.reviewer = null; next.office = null; }
+      next.stage = { retGoals: "goals", retSelf: "self", retAppr: "appraiser" }[kind];
+    } else {
+      if (kind === "submitGoals" || kind === "agreeGoals") next.goals = clone(a.goals);
+      if (kind === "submitSelf") { next.goals = mergeRatings(next.goals, a.goals, "self", "selfNote"); next.selfSummary = clone(a.selfSummary); }
+      if (kind === "submitMgr") { next.goals = mergeRatings(next.goals, a.goals, "mgr", "mgrNote"); next.appraiser = clone(a.appraiser); }
+      if (kind === "submitAck") next.ack = clone(a.ack);
+      if (kind === "countersign") next.reviewer = clone(a.reviewer);
+      if (kind === "approve") next.office = clone(a.office);
+      const label = { submitGoals: "Submitted goals for agreement", agreeGoals: "Agreed goals", submitSelf: "Submitted self-evaluation", submitMgr: "Submitted appraiser evaluation", submitAck: a.ack && a.ack.agree ? "Acknowledged and agreed" : "Acknowledged and disagreed", countersign: "Countersigned", approve: "Approved and closed" }[kind];
+      const note = kind === "submitSelf" ? "Self " + fmt(overall(next.goals, "self")) : kind === "submitMgr" ? "Overall " + fmt(overall(next.goals, "mgr")) : kind === "submitAck" ? (a.ack.comment || "") : kind === "countersign" ? ((a.reviewer || {}).comment || "") : kind === "approve" ? a.office.decision + (a.office.remarks ? ". " + a.office.remarks : "") : "";
+      H(label, note);
+      next.stage = { submitGoals: "goals_review", agreeGoals: "self", submitSelf: "appraiser", submitMgr: "ack", submitAck: RANKS[next.rank].rev ? "reviewer" : "office", countersign: "office", approve: "done" }[kind];
+    }
+    next.updated = today();
+    await saveL(next);
+    return detailL(next, u);
+  },
+  async people() { const u = S.user.id; return (L.roster || []).filter(p => p.id === u || OFFICE[u] || (roleOf(u) !== "seafarer" && L.apps[`A${YEAR}-${p.id}`] && inScopeL(u, L.apps[`A${YEAR}-${p.id}`]))).sort((a, b) => a.vessel.localeCompare(b.vessel) || RANK_ORDER.indexOf(a.rank) - RANK_ORDER.indexOf(b.rank)).map(p => ({ id: p.id, name: p.name, rank: p.rank, rankName: rankName(p.rank), vessel: p.vessel, vesselName: vesselName(p.vessel) })); },
+  async compare(pid, yr) { return compareL(pid, yr, S.user.id); },
+  async fleetVsIndustry(yr) {
+    const all = benchRows().filter(r => r[2] === yr);
+    return RANK_ORDER.map(rk => { const ours = L.roster.filter(p => p.rank === rk).map(p => scoreOfL(p.id, yr)).filter(Boolean).map(s => s.overall); const ind = all.filter(r => r[1] === rk).map(r => r[3]); if (!ours.length || !ind.length) return null; const om = quant(sortN(ours), .5), im = quant(sortN(ind), .5); return { rankCode: rk, rankName: rankName(rk), level: RANKS[rk].level, ourRated: ours.length, ourMedian: om, industryMedian: im, difference: om - im, industryPercentile: pctRank(ind, om) }; }).filter(Boolean);
+  },
+  async dashboard() {
+    const u = S.user.id; const list = Object.values(L.apps).filter(a => inScopeL(u, a)); const rated = list.filter(a => STAGE_IDX[a.stage] >= STAGE_IDX.ack);
+    const byVessel = OFFICE[u] ? VESSELS.map(v => { const xs = rated.filter(a => a.vessel === v.id).map(a => overall(a.goals, "mgr")); return xs.length ? { vesselId: v.id, vesselName: v.name, rated: xs.length, average: xs.reduce((s, x) => s + x, 0) / xs.length } : null; }).filter(Boolean) : [];
+    return { total: list.length, rated: rated.length, byStage: STAGES.map(s => ({ stage: ST_TO[s.id], count: list.filter(a => a.stage === s.id).length })), averageGap: rated.length ? rated.reduce((s, a) => s + (overall(a.goals, "self") - overall(a.goals, "mgr")), 0) / rated.length : null, byVessel };
+  },
+  async bench() {
+    const rows = benchRows(); const comps = {};
+    rows.forEach(r => { const c = comps[r[0]] = comps[r[0]] || { company: r[0], ratings: 0, years: new Set(), ranks: new Set() }; c.ratings++; c.years.add(r[2]); c.ranks.add(r[1]); });
+    return { source: L.benchMeta ? { source: L.benchMeta.source, uploaded: L.benchMeta.uploaded, isSample: false, rows: L.benchMeta.rowCount } : { source: "Sample benchmark: 5 fictional ship managers (illustrative, not real company data)", isSample: true, rows: rows.length },
+      companies: Object.values(comps).map(c => ({ company: c.company, ratings: c.ratings, years: [...c.years].sort(), ranks: c.ranks.size })) };
+  },
+  async parseBench(text, name) { return { name, text, preview: parseBench(text, name) }; },
+  async saveBench(up, source) {
+    const rows = up.preview.rows;
+    if (L.mode !== "db") { L.bench = rows; L.benchMeta = { source, uploaded: today(), rowCount: rows.length, chunks: 0 }; return; }
+    const size = 1500, n = Math.ceil(rows.length / size);
+    for (let i = 0; i < n; i++) await DB.doc("benchmark/c" + i).set({ rows: rows.slice(i * size, (i + 1) * size) });
+    const old = (L.benchMeta && L.benchMeta.chunks) || 0;
+    await DB.doc("benchmark/meta").set({ source, uploaded: today(), rowCount: rows.length, chunks: n });
+    for (let i = n; i < old; i++) await DB.doc("benchmark/c" + i).delete();
+    L.bench = rows; L.benchMeta = { source, uploaded: today(), rowCount: rows.length, chunks: n };
+  },
+  async resetBench() { if (L.mode !== "db") { L.bench = null; L.benchMeta = null; return; } const n = (L.benchMeta && L.benchMeta.chunks) || 0; await DB.doc("benchmark/meta").delete(); for (let i = 0; i < n; i++) await DB.doc("benchmark/c" + i).delete(); L.bench = null; L.benchMeta = null; },
+  async resetDemo() {
+    const f = sampleFleet();
+    if (L.mode !== "db") { L.roster = f.roster; L.hist = f.hist; L.apps = Object.fromEntries(f.apps.map(a => [a.id, a])); return; }
+    await DB.doc("fleet/roster").set({ people: f.roster }); await DB.doc("fleet/history2025").set({ people: f.hist });
+    let i = 0; for (const a of f.apps) { await DB.doc("appraisals/" + a.id).set(a); S.busy = `Resetting ${++i} of ${f.apps.length}…`; const b = $("[data-act=resetgo]"); if (b) b.textContent = S.busy; }
+  }
+};
+const DEMO_IDS = ["V1-2O", "V1-AB1", "V1-CO", "V1-CE", "V1-MST", "MSUPT", "TSUPT", "CREWING"];
+function meL(id) { const p = personL(id); return { id, name: p.name, title: p.title, role: roleOf(id), office: !!OFFICE[id], rankCode: p.rank || null, vesselId: p.vessel || null, vesselName: p.vessel ? vesselName(p.vessel) : null }; }
+function mergeRatings(target, src, key, note) { return target.map(g => { const s = src.find(x => x.id === g.id); return s ? { ...g, [key]: s[key], [note]: s[note] } : g; }); }
+function actionLabel(stage) { return { goals: "Set goals", goals_review: "Agree goals", self: "Complete self-evaluation", appraiser: "Evaluate", ack: "Read and acknowledge", reviewer: "Countersign", office: "Approve and close" }[stage] || "Open"; }
+function saveL(a) {
+  L.apps[a.id] = a;
+  if (L.mode !== "db") return Promise.resolve();
+  const prev = writeQ[a.id] || Promise.resolve();
+  const p = prev.then(() => DB.doc("appraisals/" + a.id).set(a)).catch(e => { throw new ApiError(500, dbErrText(e)); });
+  writeQ[a.id] = p.catch(() => {}); return p;
+}
+function dbErrText(e) { const c = e && e.code; if (c === "invalid_argument") return "You can't save changes on this copy. Ask the owner to share it with you as a Contributor or Editor."; if (c === "quota_exceeded") return "Storage for this page is full."; if (c === "resource_exhausted") return "Too many changes at once. Wait a few seconds and try again."; return "Couldn't save. Check your connection and try again."; }
+function goLocalMemory() { const f = sampleFleet(); L.mode = "local"; L.roster = f.roster; L.hist = f.hist; L.apps = Object.fromEntries(f.apps.map(a => [a.id, a])); S.notice = "This copy isn't connected to shared storage, so changes last only until you close the page."; }
+LocalBackend.ready = new Promise(resolve => {
+  if (API) return resolve();
+  let done = false; const finish = () => { if (!done) { done = true; resolve(); } };
+  const timer = setTimeout(() => { if (L.mode === "connecting") goLocalMemory(); finish(); }, 12000);
+  (async () => {
+    let db = null;
+    try { db = window.claude && typeof window.claude.use === "function" ? await window.claude.use("db") : null; } catch (e) { db = null; }
+    if (!db) { clearTimeout(timer); if (L.mode === "connecting") goLocalMemory(); finish(); return; }
+    DB = db; L.mode = "db";
+    let got = 0; const ready = () => { if (++got >= 2) { clearTimeout(timer); if (!L.roster || !L.roster.length) { goLocalMemoryIfEmpty(); } finish(); } };
+    DB.doc("fleet/roster").onSnapshot(s => { L.roster = s.exists ? clone(s.data().people || []) : []; if (!L.loaded.roster) { L.loaded.roster = true; ready(); } else liveChanged(); });
+    DB.doc("fleet/history2025").onSnapshot(s => { L.hist = s.exists ? clone(s.data().people || {}) : {}; liveChanged(); });
+    DB.collection("appraisals").onSnapshot(q => { const m = {}; q.docs.forEach(d => { m[d.id] = clone(d.data()); }); L.apps = m; if (!L.loaded.apps) { L.loaded.apps = true; ready(); } else liveChanged(); });
+    DB.collection("benchmark").onSnapshot(q => { const meta = q.docs.find(d => d.id === "meta"); if (!meta) { L.bench = null; L.benchMeta = null; liveChanged(); return; } const m = meta.data(); const rows = []; for (let i = 0; i < (m.chunks || 0); i++) { const c = q.docs.find(d => d.id === "c" + i); if (c) rows.push(...clone(c.data().rows || [])); } if (rows.length === m.rowCount) { L.bench = rows; L.benchMeta = clone(m); } liveChanged(); });
+  })();
+});
+function goLocalMemoryIfEmpty() { if (!L.roster || !L.roster.length) { const f = sampleFleet(); L.roster = f.roster; L.hist = f.hist; L.apps = Object.fromEntries(f.apps.map(a => [a.id, a])); S.notice = "Shared storage is empty. Sign in as the Crewing Manager and use Demo data › Reset to load the sample fleet for everyone."; } }
+let liveTimer;
+function liveChanged() { if (API || !S.user) return; clearTimeout(liveTimer); liveTimer = setTimeout(() => { if (S.edit) return; reload(true); }, 300); }
+
+const B = API ? ApiBackend : LocalBackend;
+/* ===== Rules (validation) ===== */
+function goalChecks(goals) {
+  const total = goals.reduce((s, g) => s + (Number(g.weight) || 0), 0);
+  const safety = goals.filter(g => g.category === "Safety");
+  return [
+    { ok: goals.length >= 3 && goals.length <= 6, t: `3 to 6 goals (now ${goals.length})` },
+    { ok: total === 100, t: `Weights add up to 100% (now ${total}%)` },
+    { ok: goals.every(g => Number.isInteger(+g.weight) && +g.weight >= 10), t: "Each goal is a whole number of at least 10%" },
+    { ok: safety.length === 1, t: `Exactly one Safety goal (now ${safety.length})` },
+    { ok: safety.length !== 1 || +safety[0].weight >= 20, t: "Safety goal carries at least 20%" },
+    { ok: goals.every(g => g.title.trim() && g.target.trim()), t: "Every goal has a title and a measurable target" }
+  ];
+}
+const needsNote = v => v === 1 || v === 2 || v === 5;
+function selfChecks(a) {
+  return [
+    { ok: a.goals.every(g => g.self), t: "Every goal rated" },
+    { ok: a.goals.every(g => !needsNote(g.self) || g.selfNote.trim()), t: "A comment on every 1, 2 or 5 rating" },
+    { ok: !!a.selfSummary.achievements.trim(), t: "Key achievements filled in" }
+  ];
+}
+function mgrChecks(a) {
+  const p = a.appraiser || {};
+  const ov = overall(a.goals, "mgr");
+  const saf = (a.goals.find(g => g.category === "Safety") || {}).mgr;
+  const low = a.goals.some(g => g.mgr && g.mgr <= 2);
+  const next = RANKS[a.rank].next;
+  return [
+    { ok: a.goals.every(g => g.mgr), t: "Every goal rated" },
+    { ok: a.goals.every(g => !needsNote(g.mgr) || g.mgrNote.trim()), t: "Evidence written for every 1, 2 or 5 rating" },
+    { ok: !!(p.strengths || "").trim() && !!(p.improvements || "").trim(), t: "Strengths and areas to improve filled in" },
+    { ok: !!p.rehire, t: "Re-hire recommendation chosen" },
+    { ok: p.rehire !== "Recommended" || ov == null || (ov >= 2.5 && !(saf <= 2)), t: "“Recommended” needs an overall of 2.50 or more and Safety above 2" },
+    { ok: !!p.promotion, t: "Promotion readiness chosen" },
+    { ok: p.promotion !== "Ready now" || (!!next && ov >= 3.5 && saf >= 4), t: next ? "“Ready now” needs 3.50 or more overall and Safety 4 or 5" : "No next rank, so promotion is not applicable" },
+    { ok: !low || (p.training || []).length > 0, t: "Training chosen for any goal rated 1 or 2" }
+  ];
+}
+function ackChecks(a) { const k = a.ack || {}; return [{ ok: k.agree === true || k.agree === false, t: "Agree or disagree chosen" }, { ok: k.agree !== false || !!(k.comment || "").trim(), t: "A comment explaining what you disagree with" }]; }
+function officeChecks(a) {
+  const o = a.office || {}; const ov = overall(a.goals, "mgr");
+  return [
+    { ok: !!o.decision, t: "Re-hire decision chosen" },
+    { ok: o.decision !== "Approved" || ov >= 2.5, t: "“Approved” needs an overall of 2.50 or more" },
+    { ok: o.decision !== "Not for re-hire" || !!(o.remarks || "").trim(), t: "Remarks for a not-for-re-hire decision" }
+  ];
+}
+const allOk = cs => cs.every(c => c.ok);
+const checksHtml = cs => `<ul class="checks">${cs.map(c => `<li class="${c.ok ? "" : "bad"}">${esc(c.t)}</li>`).join("")}</ul>`;
+
+function checksForKind(kind, a) {
+  const cs = kind === "submitGoals" || kind === "agreeGoals" ? goalChecks(a.goals) : kind === "submitSelf" ? selfChecks(a) : kind === "submitMgr" ? mgrChecks(a) : kind === "submitAck" ? ackChecks(a) : kind === "approve" ? officeChecks(a) : [];
+  return cs.filter(c => !c.ok).map(c => c.t);
+}
+/* ===== Navigation =====
+   Every page has its own address after the #, so the browser's Back and Forward buttons, refresh and bookmarks work:
+   #work  #mine  #team  #app.A2026-V1-2O  #compare  #compare.V1-2O  #compare.V1-2O.2025  #bench  #admin  #account  #login */
+const anchorSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M12 7v14M7 11h10M4 15c0 3.5 3.6 6 8 6s8-2.5 8-6"/></svg>`;
+function parseHash() { const h = (location.hash || "").replace(/^#/, ""); const [name, ...args] = h.split("."); return { name: name || "", args }; }
+function go(token) { if (location.hash === "#" + token) reload(); else location.hash = token; }
+function defaultRoute(u) { return u.role === "seafarer" ? "mine" : "work"; }
+function tabsFor(u) {
+  const r = u.role;
+  if (r === "seafarer") return [{ id: "mine", label: "My appraisal" }, { id: "compare", label: "How I compare" }];
+  if (r === "hod") return [{ id: "work", label: "My work" }, { id: "team", label: "My team" }, { id: "mine", label: "My appraisal" }, { id: "compare", label: "Compare" }];
+  if (r === "master") return [{ id: "work", label: "My work" }, { id: "team", label: "Vessel crew" }, { id: "mine", label: "My appraisal" }, { id: "compare", label: "Compare" }];
+  if (r === "supt") return [{ id: "work", label: "My work" }, { id: "team", label: "Fleet" }, { id: "compare", label: "Compare" }];
+  return [{ id: "work", label: "My work" }, { id: "team", label: "Fleet" }, { id: "compare", label: "Compare" }, { id: "bench", label: "Benchmark data" }, { id: "admin", label: "Demo data" }];
+}
+const ALLOWED = { seafarer: ["mine", "compare", "app", "account"], hod: ["work", "team", "mine", "compare", "app", "account"], master: ["work", "team", "mine", "compare", "app", "account"], supt: ["work", "team", "compare", "app", "account"], crewing: ["work", "team", "compare", "bench", "admin", "app", "account"] };
+
+async function route() {
+  const { name, args } = parseHash();
+  if (!S.user) {
+    if (S.view.name === "boot") { try { S.user = await B.me(); } catch (e) { S.user = null; } }
+    if (!S.user) { if (name && name !== "login") S.afterLogin = location.hash.slice(1); S.view = { name: "login", args: [], data: null }; if (!S.demo) B.demoAccounts().then(d => { S.demo = d; if (S.view.name === "login") render(); }); render(); return; }
+  }
+  if (!name || name === "login") { history.replaceState(null, "", "#" + defaultRoute(S.user)); return route(); }
+  if (!(ALLOWED[S.user.role] || []).includes(name)) { S.view = { name: "notfound", args, data: null }; render(); return; }
+  S.view = { name, args, data: null, loading: true }; S.errors = null; S.open = {};
+  if (!S.edit || name !== "app" || S.edit.id !== args.join(".")) S.edit = null;
+  render();
+  await load();
+}
+async function load(quiet) {
+  const v = S.view; const token = location.hash;
+  try {
+    let data = null;
+    switch (v.name) {
+      case "work": { const [w, mine, scope] = await Promise.all([B.worklist(), B.list("mine"), B.list()]); data = { work: w, own: mine[0] || null, others: scope.filter(a => a.waitingOn && a.waitingOn !== S.user.id) }; break; }
+      case "team": { const [list, dash] = await Promise.all([B.list(), B.dashboard()]); data = { list, dash }; break; }
+      case "mine": { const mine = await B.list("mine"); data = { a: mine[0] ? await B.get(mine[0].id) : null }; break; }
+      case "app": data = { a: await B.get(v.args.join(".")) }; break;
+      case "compare": {
+        const people = await B.people(); const pid = v.args[0] && people.some(p => p.id === v.args[0]) ? v.args[0] : (people.some(p => p.id === S.user.id) ? S.user.id : (people[0] || {}).id);
+        if (!pid) { data = { people, none: true }; break; }
+        let yr = +v.args[1] || YEAR; let cmp = await B.compare(pid, yr);
+        if (!v.args[1] && cmp.result.overall == null && cmp.hasPreviousYear) { yr = YEAR - 1; cmp = await B.compare(pid, yr); }
+        const fvi = S.user.office ? await B.fleetVsIndustry(yr) : null;
+        data = { people, pid, yr, cmp, fvi }; break;
+      }
+      case "bench": data = { bench: await B.bench() }; break;
+      default: data = {};
+    }
+    if (token !== location.hash) return; // the user navigated away while this was loading
+    v.data = data; v.loading = false; v.error = null;
+  } catch (e) {
+    if (token !== location.hash) return;
+    v.loading = false; v.error = e;
+  }
+  if (quiet) changed(); else render();
+}
+function reload(quiet) { if (S.user && S.view.name !== "login") load(quiet); }
+function onSignedOut() { if (!S.user) return; S.user = null; S.edit = null; S.notice = "Your session ended. Please sign in again."; S.afterLogin = location.hash.slice(1); S.view = { name: "login", args: [] }; render(); }
+
+/* ===== Rendering plumbing ===== */
+function changed() {
+  const ae = document.activeElement;
+  if (ae && ae.closest && ae.closest("#main") && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) { renderPending = true; return; }
+  render();
+}
+document.addEventListener("focusout", () => { if (renderPending) setTimeout(() => { const ae = document.activeElement; if (!(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.closest("#main"))) { renderPending = false; render(); } }, 0); });
+let toastT;
+function toast(msg) { let t = $(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); } t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 4200); }
+
+function render() {
+  renderPending = false;
+  const root = $("#app");
+  const v = S.view;
+  if (v.name === "boot") { root.innerHTML = `<div class="empty" style="padding:60px">Loading…</div>`; return; }
+  if (!S.user || v.name === "login") { root.innerHTML = renderLogin(); document.title = "Sign in · Fleet Appraisal Desk"; return; }
+  const u = S.user, tabs = tabsFor(u);
+  const cur = v.name === "app" ? (S.from || "") : v.name;
+  let body;
+  if (v.loading) body = `<div class="panel empty">Loading…</div>`;
+  else if (v.error) body = errorPage(v.error);
+  else body = viewHtml();
+  root.innerHTML = `<header class="bar"><div class="bar-in"><a class="brand" href="#${defaultRoute(u)}" style="color:inherit;text-decoration:none">${anchorSvg} FLEET APPRAISAL DESK</a>
+    <div class="who"><div style="min-width:0;text-align:right"><b>${esc(u.name)}</b><br><span>${esc(u.office ? u.title : `${u.title} · ${u.vesselName || ""}`)}</span></div>
+    ${API ? `<a class="btn btn-ghost btn-sm" href="#account">Account</a>` : ""}<button class="btn btn-ghost btn-sm" data-act="logout" type="button">Sign out</button></div></div>
+    <nav class="tabs" aria-label="Sections">${tabs.map(t => `<a href="#${t.id}" ${t.id === cur ? 'aria-current="page"' : ""}>${esc(t.label)}</a>`).join("")}</nav></header>
+    ${S.notice ? `<div style="padding-inline:16px"><div class="notice">${esc(S.notice)}</div></div>` : ""}
+    <main class="wrap" id="main">${crumbs()}${body}</main>`;
+  const titles = { work: "My work", mine: "My appraisal", team: tabs.find(t => t.id === "team") ? tabs.find(t => t.id === "team").label : "Team", compare: "Compare", bench: "Benchmark data", admin: "Demo data", account: "Account", app: "Appraisal", notfound: "Not found" };
+  document.title = (titles[v.name] || "Fleet Appraisal Desk") + " · Fleet Appraisal Desk";
+  afterRender();
+}
+function crumbs() {
+  const v = S.view; const home = tabsFor(S.user)[0];
+  const parts = [`<a href="#${home.id}">${esc(home.label)}</a>`];
+  if (v.name === "app") {
+    const from = tabsFor(S.user).find(t => t.id === S.from) || null;
+    if (from && from.id !== home.id) parts.push(`<a href="#${from.id}">${esc(from.label)}</a>`);
+    parts.push(`<span>${esc(v.data && v.data.a ? (v.data.a.names[v.data.a.personId] || v.data.a.personId) : "Appraisal")}</span>`);
+  } else if (v.name === "compare" && v.data && v.data.cmp) {
+    if (home.id !== "compare") parts.push(`<a href="#compare">${S.user.role === "seafarer" ? "How I compare" : "Compare"}</a>`);
+    parts.push(`<span>${esc(v.data.cmp.name)} · ${v.data.yr}</span>`);
+  } else if (v.name !== home.id) {
+    const t = tabsFor(S.user).find(t => t.id === v.name); parts.push(`<span>${esc(t ? t.label : v.name === "account" ? "Account" : "Not found")}</span>`);
+  } else return "";
+  return `<nav class="crumbs" aria-label="You are here">${parts.join('<span class="sep" aria-hidden="true">›</span>')}</nav>`;
+}
+function errorPage(e) {
+  const msg = e.status === 403 ? "You don't have access to this page." : e.status === 404 ? "We couldn't find that appraisal or person." : e.message || "Something went wrong.";
+  return `<div class="panel empty" style="display:grid;gap:12px;justify-items:center"><h2>${esc(msg)}</h2><div class="actions"><button class="btn" type="button" data-act="back">Go back</button><a class="btn btn-primary" href="#${defaultRoute(S.user)}">Go to my start page</a></div></div>`;
+}
+function viewHtml() {
+  switch (S.view.name) {
+    case "work": return viewWork();
+    case "team": return viewTeam();
+    case "mine": return S.view.data.a ? viewAppraisal(S.view.data.a) : `<div class="panel empty">No appraisal is open for you this year.</div>`;
+    case "app": return viewAppraisal(S.view.data.a);
+    case "compare": return viewCompare();
+    case "bench": return viewBench();
+    case "admin": return viewAdmin();
+    case "account": return viewAccount();
+  }
+  return `<div class="panel empty" style="display:grid;gap:12px;justify-items:center"><h2>Page not found</h2><p class="muted">That address doesn't match a page you can open.</p><a class="btn btn-primary" href="#${defaultRoute(S.user)}">Go to my start page</a></div>`;
+}
+const stageChip = stage => `<span class="chip st-${stage}">${esc(STAGES[STAGE_IDX[stage]].name)}</span>`;
+const appLink = (a, label, cls) => `<a class="${cls || ""}" href="#app.${esc(a.id)}" data-from="${S.view.name}">${label}</a>`;
+
+/* ===== Login ===== */
+function renderLogin() {
+  const accts = (S.demo || []).map(d => {
+    const own = d.ownStage ? ST_FROM[d.ownStage] : null;
+    const status = own ? (d.ownIsMine ? actionLabel(own) : STAGES[STAGE_IDX[own]].name) : "";
+    const extra = [status, d.waiting ? `${d.waiting} waiting for them` : ""].filter(Boolean).join(" · ");
+    let rk = (d.id.split("-")[1] || ""); if (!RANKS[rk]) rk = rk.replace(/\d+$/, "");
+    const roleLbl = d.role === "seafarer" ? (RANKS[rk] && RANKS[rk].level === "Officer" ? "Seafarer · Officer" : "Seafarer · Non-Officer") : d.role === "hod" ? "Appraiser · head of dept" : d.role === "master" ? "Master · countersigns" : d.role === "crewing" ? "Crewing Manager · office" : (d.title || "Office");
+    return `<button class="acct" type="button" data-act="quick" data-id="${esc(d.id)}"><span class="role">${esc(roleLbl)}</span><span class="nm">${esc(d.name)}</span><span class="meta">${esc(d.id)}${extra ? " · " + esc(extra) : ""}</span></button>`;
+  }).join("");
+  return `<div class="login">
+  <aside class="login-side">
+    <div><div class="brand">${anchorSvg} FLEET APPRAISAL DESK</div>
+      <h1 style="margin-top:28px">Yearly crew appraisal, from goals to sign-off</h1>
+      <p>Every seafarer sets goals and rates themselves. The head of department then rates them, the Master countersigns and the office approves. Then see how each person compares with their rank across the fleet and the industry.</p></div>
+    <div class="scale"><div class="eyebrow" style="color:inherit;opacity:.7">Rating scale</div>${SCALE.slice().reverse().map(s => `<div><b>${s.v}</b>${esc(s.label)}</div>`).join("")}</div>
+  </aside>
+  <main class="login-main">
+    <div><h2>Sign in</h2><p class="muted small" style="margin-top:4px">Use your Crew ID (for example V1-2O) or office user name.${S.demo && S.demo.length ? " Demo accounts use the password <b class=\"num\">demo</b>." : ""}</p></div>
+    ${S.notice && !S.user ? `<p class="notice" style="margin:0">${esc(S.notice)}</p>` : ""}
+    <form class="login-form" id="loginForm" novalidate>
+      <label class="f" for="lid">Crew ID or office user<input id="lid" type="text" autocomplete="username" autocapitalize="characters" placeholder="e.g. V1-2O or CREWING" value="${esc(S.loginId || "")}"></label>
+      <label class="f" for="lpw">Password<input id="lpw" type="password" autocomplete="current-password"></label>
+      ${S.loginErr ? `<p class="err small" role="alert">${esc(S.loginErr)}</p>` : ""}
+      <div class="actions"><button class="btn btn-primary" type="submit" ${S.busy ? "disabled" : ""}>${S.busy || "Sign in"}</button></div>
+    </form>
+    ${accts ? `<div style="display:grid;gap:10px"><div class="eyebrow">Demo accounts · MV Coral Meridian and office</div><div class="acct-grid">${accts}</div>
+      <p class="faint small">Any crew member can sign in with their Crew ID, for example V3-OLR or V2-AB2.</p></div>` : ""}
+  </main></div>`;
+}
+async function doLogin(id, pw) {
+  S.loginId = (id || "").trim().toUpperCase(); S.loginErr = ""; S.busy = "Signing in…"; render();
+  try {
+    S.user = await B.login(S.loginId, pw); S.busy = ""; S.notice = API ? "" : S.notice; S.loginId = "";
+    let target = S.afterLogin && S.afterLogin !== "login" ? S.afterLogin : defaultRoute(S.user); S.afterLogin = null;
+    if (S.user.mustChange) { target = "account"; S.pwOk = false; S.pwMsg = "Please choose your own password before you continue."; }
+    if (location.hash === "#" + target) route(); else location.hash = target;
+    window.scrollTo(0, 0);
+  } catch (e) { S.busy = ""; S.loginErr = e.message || "Couldn't sign in."; render(); const f = $("#lpw"); if (f) f.focus(); }
+}
+
+/* ===== My work ===== */
+function viewWork() {
+  const d = S.view.data;
+  const row = (a, action) => `<tr><td>${appLink(a, `<b>${esc(a.name)}</b>`)}<div class="faint small">${esc(a.rankName)} · ${esc(a.vesselName)}</div></td><td><span class="lvl">${esc(a.level)}</span></td><td>${stageChip(a.stage)}</td><td>${action ? appLink(a, esc(action), "btn btn-sm btn-primary") : esc(a.waitingOnName || "–")}</td></tr>`;
+  return `<div class="page-head"><div><h1>My work</h1><p class="sub">${esc(S.user.title)}</p></div></div>
+  ${d.own ? `<div class="panel"><header><h2>My own appraisal ${d.own.year || YEAR}</h2>${stageChip(d.own.stage)}</header><p class="muted">${d.own.waitingOn === S.user.id ? "It's your turn: " + esc(actionLabel(d.own.stage).toLowerCase()) + "." : d.own.waitingOn ? "Waiting on " + esc(d.own.waitingOnName) + "." : "Closed."} <a href="#mine">Open my appraisal</a></p></div>` : ""}
+  <div class="panel"><header><h2>Waiting for you</h2><span class="faint small">${d.work.length} item${d.work.length === 1 ? "" : "s"}</span></header>
+  ${d.work.length ? `<div class="tbl-wrap"><table><thead><tr><th>Seafarer</th><th>Level</th><th>Step</th><th></th></tr></thead><tbody>${d.work.map(w => row(w.a, w.action)).join("")}</tbody></table></div>` : `<p class="empty">Nothing is waiting for you right now.</p>`}</div>
+  <div class="panel"><header><h2>With others</h2><span class="faint small">${d.others.length} in progress</span></header>
+  ${d.others.length ? `<div class="tbl-wrap"><table><thead><tr><th>Seafarer</th><th>Level</th><th>Step</th><th>Waiting on</th></tr></thead><tbody>${d.others.slice(0, 80).map(a => row(a, null)).join("")}</tbody></table></div>` : `<p class="empty">Nothing in progress with others.</p>`}</div>`;
+}
+
+/* ===== Team, vessel crew or fleet ===== */
+function viewTeam() {
+  const { list: all, dash } = S.view.data; const f = S.fleetF; const off = S.user.office;
+  let list = all;
+  if (f.vessel) list = list.filter(a => a.vessel === f.vessel);
+  if (f.level) list = list.filter(a => a.level === f.level);
+  if (f.stage) list = list.filter(a => a.stage === f.stage);
+  if (f.q) { const q = f.q.toLowerCase(); list = list.filter(a => a.name.toLowerCase().includes(q) || a.rankName.toLowerCase().includes(q) || a.personId.toLowerCase().includes(q)); }
+  const title = tabsFor(S.user).find(t => t.id === "team").label;
+  const max = Math.max(1, ...dash.byStage.map(c => c.count));
+  return `<div class="page-head"><div><h1>${esc(title)}</h1><p class="sub">${all.length} appraisals for ${YEAR}${off ? " across the fleet" : S.user.role === "master" ? " on " + esc(S.user.vesselName) : " where you are appraiser or countersigner"}</p></div></div>
+  <div class="grid2">
+    <div class="panel"><h2>Where the appraisals are</h2><div class="funnel" style="margin-top:12px">${dash.byStage.map(c => `<div><span>${esc(STAGES[STAGE_IDX[ST_FROM[c.stage]]].name)}</span><span class="track"><span class="fill" style="display:block;width:${(c.count / max * 100).toFixed(1)}%"></span></span><span class="num r">${c.count}</span></div>`).join("")}</div></div>
+    <div class="panel"><h2>Appraiser ratings so far</h2>
+      <div class="tiles" style="margin-top:12px"><div class="tile"><span class="eyebrow">Rated by appraiser</span><span class="big num">${dash.rated}<small> of ${dash.total}</small></span></div>
+      <div class="tile"><span class="eyebrow">Self minus appraiser</span><span class="big num">${dash.averageGap == null ? "–" : (dash.averageGap >= 0 ? "+" : "") + Number(dash.averageGap).toFixed(2)}</span><span class="faint small">Average gap; positive means people rate themselves higher</span></div></div>
+      ${dash.byVessel && dash.byVessel.length ? `<div class="funnel" style="margin-top:14px">${dash.byVessel.map(x => `<div><span>${esc(x.vesselName)}</span><span class="track"><span class="fill" style="display:block;width:${((x.average - 1) / 4 * 100).toFixed(1)}%"></span></span><span class="num">${Number(x.average).toFixed(2)}</span></div>`).join("")}</div><p class="faint small" style="margin-top:6px">Average appraiser rating by vessel, on the 1–5 scale</p>` : ""}
+    </div>
+  </div>
+  <div class="panel"><div class="filters">
+    ${off ? `<label class="f" for="fv">Vessel<select id="fv" data-filter="vessel"><option value="">All vessels</option>${VESSELS.map(v => `<option value="${v.id}" ${f.vessel === v.id ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select></label>` : ""}
+    <label class="f" for="fl">Level<select id="fl" data-filter="level"><option value="">Officer and Non-Officer</option><option ${f.level === "Officer" ? "selected" : ""}>Officer</option><option ${f.level === "Non-Officer" ? "selected" : ""}>Non-Officer</option></select></label>
+    <label class="f" for="fs">Step<select id="fs" data-filter="stage"><option value="">Any step</option>${STAGES.map(s => `<option value="${s.id}" ${f.stage === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label>
+    <label class="f" for="fq" style="flex:1">Search<input id="fq" type="text" data-filter="q" placeholder="Name, rank or Crew ID" value="${esc(f.q)}"></label></div>
+  <div class="tbl-wrap" style="margin-top:12px"><table><thead><tr><th>Seafarer</th><th>Vessel</th><th>Level</th><th>Step</th><th>Waiting on</th><th class="r">Self</th><th class="r">Appraiser</th><th></th></tr></thead><tbody>
+  ${list.map(a => `<tr><td>${appLink(a, `<b>${esc(a.name)}</b>`)}<div class="faint small">${esc(a.rankName)} · ${esc(a.personId)}</div></td><td class="small">${esc(a.vesselName)}</td><td><span class="lvl">${esc(a.level)}</span></td><td>${stageChip(a.stage)}</td><td class="small">${esc(a.waitingOnName || "–")}</td><td class="r num">${fmt(a.selfOverall)}</td><td class="r num">${fmt(a.apprOverall)}</td><td><a class="btn btn-sm" href="#compare.${esc(a.personId)}">Compare</a></td></tr>`).join("") || `<tr><td colspan="8" class="empty">No appraisals match these filters.</td></tr>`}
+  </tbody></table></div></div>`;
+}
+
+/* ===== Account (server version) ===== */
+function viewAccount() {
+  if (!API) return `<div class="panel empty">Passwords are managed in the server version of the app.</div>`;
+  return `<div class="page-head"><div><h1>Account</h1><p class="sub">${esc(S.user.name)} · ${esc(S.user.id)}</p></div></div>
+  <div class="panel" style="max-width:520px"><h2>Change password</h2>
+  <form id="pwForm" style="display:grid;gap:12px;margin-top:12px" novalidate>
+    <label class="f" for="pw0">Current password<input id="pw0" type="password" autocomplete="current-password"></label>
+    <label class="f" for="pw1">New password <span class="faint">(at least 8 characters)</span><input id="pw1" type="password" autocomplete="new-password"></label>
+    <label class="f" for="pw2">New password again<input id="pw2" type="password" autocomplete="new-password"></label>
+    ${S.pwMsg ? `<p class="${S.pwOk ? "" : "err"} small" role="status">${esc(S.pwMsg)}</p>` : ""}
+    <div class="actions"><button class="btn btn-primary" type="submit">Change password</button></div></form></div>`;
+}
+/* ===== Appraisal page ===== */
+const nm = (a, id) => (a.names && a.names[id]) || (id === "CREWING" ? OFFICE.CREWING.name : id) || "–";
+function editableFor(a) {
+  const u = S.user.id;
+  switch (a.stage) {
+    case "goals": return u === a.personId || u === a.appraiserId ? "goals" : null;
+    case "goals_review": return u === a.appraiserId ? "goals" : null;
+    case "self": return u === a.personId ? "self" : null;
+    case "appraiser": return u === a.appraiserId ? "mgr" : null;
+    case "ack": return u === a.personId ? "ack" : null;
+    case "reviewer": return u === a.reviewerId ? "rev" : null;
+    case "office": return u === "CREWING" ? "office" : null;
+  }
+  return null;
+}
+function working(live) {
+  const mode = editableFor(live);
+  if (!mode) return { a: live, mode: null };
+  if (!S.edit || S.edit.id !== live.id || S.edit.stage !== live.stage) {
+    const c = clone(live);
+    if (mode === "mgr" && !c.appraiser) c.appraiser = { strengths: "", improvements: "", rehire: "", promotion: c.nextRank ? "" : "Not applicable", training: [], comment: "" };
+    if (mode === "ack") c.ack = { agree: null, comment: "" };
+    if (mode === "rev") c.reviewer = { comment: "" };
+    if (mode === "office") c.office = { decision: "", promotionApproved: (c.appraiser || {}).promotion === "Ready now", training: clone((c.appraiser || {}).training || []), remarks: "" };
+    S.edit = { id: live.id, stage: live.stage, app: c, ret: "", dirty: false };
+  }
+  return { a: S.edit.app, mode };
+}
+const pill = (v, cls) => v ? `<span class="pill5 ${cls}"><b>${v}</b>${esc(SCALE[v - 1].label)}</span>` : `<span class="faint small">Not rated</span>`;
+function rateCtl(gi, key, val) {
+  return `<div class="rate" role="group" aria-label="Rating 1 to 5">${SCALE.map(s => `<button type="button" data-act="rate" data-gi="${gi}" data-key="${key}" data-v="${s.v}" aria-pressed="${val === s.v}" title="${esc(s.label)}">${s.v}</button>`).join("")}</div><div class="rate-lbl" id="rl-${key}-${gi}">${val ? esc(SCALE[val - 1].label) : "Not rated yet"}</div>`;
+}
+function stepper(a) {
+  const si = STAGE_IDX[a.stage];
+  const who = { goals: nm(a, a.personId), goals_review: nm(a, a.appraiserId), self: nm(a, a.personId), appraiser: nm(a, a.appraiserId), ack: nm(a, a.personId), reviewer: a.hasReviewer ? nm(a, a.reviewerId) : "Not needed for this rank", office: nm(a, "CREWING"), done: "" };
+  return `<ol class="steps" aria-label="Steps">${STAGES.map((s, i) => { const skip = s.id === "reviewer" && !a.hasReviewer; const st = skip ? "skip" : i < si || a.stage === "done" ? "done" : i === si ? "now" : ""; return `<li class="step ${st}" ${st === "now" ? 'aria-current="step"' : ""}><b>${esc(s.short)}</b>${esc(who[s.id])}</li>`; }).join("")}</ol>`;
+}
+function turnText(mode, a) {
+  return {
+    goals: a.stage === "goals_review" ? "Check the goals the seafarer proposed. Adjust them if needed, then agree them or send them back." : (S.user.id === a.personId ? "Set 3 to 6 goals for the year. Start from the template, add goals from the library or write your own, then send them to your appraiser." : "The seafarer is still drafting goals. You can adjust them and agree them now."),
+    self: "Rate yourself on each goal from 1 to 5. Explain any 1, 2 or 5, and summarise your year.",
+    mgr: "Rate each goal from 1 to 5. The seafarer's own rating is shown beside yours. Explain any 1, 2 or 5 with evidence.",
+    ack: "Read your appraiser's ratings. Say whether you agree. If you disagree, explain why; it goes on record.",
+    rev: "Check the appraisal is fair and well evidenced. Countersign it, or send it back to the appraiser with remarks.",
+    office: "Record the office decision on re-hire, promotion and training, then close the appraisal."
+  }[mode];
+}
+
+function viewAppraisal(live) {
+  const { a, mode } = working(live);
+  const si = STAGE_IDX[a.stage];
+  const showSelf = live.seesSelf;
+  const showMgr = live.seesAppr || mode === "mgr";
+  const so = showSelf && (si >= STAGE_IDX.appraiser || a.personId === S.user.id) ? overall(a.goals, "self") : null, mo = showMgr ? overall(a.goals, "mgr") : null;
+  const mine = a.personId === S.user.id;
+  return `<div class="page-head"><div><div class="eyebrow">${a.year} appraisal · ${esc(a.id)}</div><h1 style="margin-top:4px">${esc(nm(a, a.personId))}</h1>
+    <p class="sub">${esc(rankName(a.rank))} · <span class="lvl">${esc(a.level)}</span> · ${esc(vesselName(a.vessel))} · appraiser ${esc(nm(a, a.appraiserId))}${a.hasReviewer ? " · countersign " + esc(nm(a, a.reviewerId)) : ""}</p></div>
+    <div class="actions">${S.view.name === "app" ? `<button class="btn btn-sm" type="button" data-act="back">Back</button>` : ""}<a class="btn btn-sm" href="#compare.${esc(a.personId)}">How ${mine ? "I" : "they"} compare</a></div></div>
+  <div class="panel">${stepper(a)}</div>
+  ${mode ? `<div class="panel" style="border-color:var(--accent)"><div class="eyebrow" style="color:var(--accent)">Your turn · ${esc(STAGES[si].name)}</div><p style="margin-top:4px">${esc(turnText(mode, a))}</p></div>` : a.stage !== "done" ? `<p class="muted small" style="margin:0">Waiting on <b>${esc(nm(a, a.waitingOn))}</b> · ${esc(STAGES[si].name)}</p>` : ""}
+  <div class="tiles">
+    <div class="tile"><span class="eyebrow">Self-evaluation</span><span class="big num" id="sc-self">${fmt(so)}<small> / 5</small></span><span class="small muted">${so ? esc(band(so).label) : showSelf ? "Not rated yet" : "Shown once submitted"}</span></div>
+    <div class="tile hl"><span class="eyebrow">Appraiser rating</span><span class="big num" id="sc-mgr">${fmt(mo)}<small> / 5</small></span><span class="small muted" id="sc-mgr-b">${mo ? esc(band(mo).label) : showMgr ? "Not rated yet" : "Shown once the appraiser submits"}</span></div>
+    <div class="tile"><span class="eyebrow">Gap</span><span class="big num" id="sc-gap">${so && mo ? (so - mo >= 0 ? "+" : "") + (so - mo).toFixed(2) : "–"}</span><span class="small muted">Self minus appraiser</span></div>
+  </div>
+  ${mode === "goals" ? goalsEditor(a) : goalsView(a, mode, showSelf, showMgr)}
+  ${summarySections(a, mode, showSelf, showMgr)}
+  ${mode ? actionPanel(a, mode) : ""}
+  <div class="panel"><h2>History</h2><ul class="timeline" style="margin-top:12px">${a.history.slice().reverse().map(h => `<li><span class="d">${esc(fdate(h.on))}</span><span><b>${esc(nm(a, h.by))}</b> · ${esc(h.action)}${h.note ? `<br><span class="muted">${esc(h.note)}</span>` : ""}</span></li>`).join("")}</ul></div>`;
+}
+
+function goalsEditor(a) {
+  const dept = RANKS[a.rank].dept;
+  const lib = GOAL_LIBRARY.filter(g => g.for === "All" || g.for === dept || g.for === a.level);
+  return `<div class="panel"><header><h2>Goals for ${a.year}</h2><span class="small muted">Weights total <b class="num" id="wt-total">${a.goals.reduce((s, g) => s + (+g.weight || 0), 0)}%</b></span></header>
+  <div>${a.goals.map((g, i) => `<div class="goal"><div class="goal-edit">
+      <label class="f" for="gt${i}">Goal<input id="gt${i}" type="text" data-bind="goals.${i}.title" value="${esc(g.title)}" maxlength="120"></label>
+      <label class="f catf" for="gc${i}">Area<select id="gc${i}" data-bind="goals.${i}.category">${CATS.map(c => `<option ${g.category === c ? "selected" : ""}>${c}</option>`).join("")}</select></label>
+      <label class="f" for="gw${i}">Weight %<input id="gw${i}" class="w" type="number" min="10" max="60" step="5" data-bind="goals.${i}.weight" data-num="1" value="${esc(g.weight)}"></label>
+      <button class="btn btn-sm btn-ghost" type="button" data-act="rmgoal" data-gi="${i}" aria-label="Remove goal ${i + 1}">Remove</button>
+      <label class="f t2" for="gg${i}">Target (how it will be measured)<textarea id="gg${i}" data-bind="goals.${i}.target" rows="2" maxlength="300">${esc(g.target)}</textarea></label>
+    </div></div>`).join("") || `<p class="empty">No goals yet. Load the ${esc(a.level)} template or add a goal.</p>`}</div>
+  <div class="filters" style="margin-top:14px">
+    <label class="f" for="libSel" style="flex:1;min-width:220px">Add a goal<select id="libSel"><option value="">Write my own goal</option>${lib.map(g => `<option value="${GOAL_LIBRARY.indexOf(g)}">${esc(g.category)} · ${esc(g.title)}</option>`).join("")}</select></label>
+    <button class="btn" type="button" data-act="addgoal" ${a.goals.length >= 6 ? "disabled" : ""}>Add goal</button>
+    <button class="btn btn-ghost" type="button" data-act="tplgoals">Reset to the ${esc(a.level)} template</button>
+  </div></div>`;
+}
+function goalsView(a, mode, showSelf, showMgr) {
+  return `<div class="panel"><header><h2>Goals and ratings</h2><span class="faint small">1 Unsatisfactory · 2 Needs improvement · 3 Meets · 4 Exceeds · 5 Outstanding</span></header><div>
+  ${a.goals.map((g, i) => {
+    const selfCol = mode === "self"
+      ? `<div><div class="who-rated">Self rating</div>${rateCtl(i, "self", g.self)}<label class="f" for="sn${i}" style="margin-top:6px"><span>Comment <span class="faint" id="need-self-${i}">${needsNote(g.self) ? "(required for this rating)" : "(optional)"}</span></span><textarea id="sn${i}" data-bind="goals.${i}.selfNote" rows="2" maxlength="500">${esc(g.selfNote)}</textarea></label></div>`
+      : `<div><div class="who-rated">Self rating</div>${showSelf ? pill(g.self, "s") + (g.selfNote ? `<p class="small muted" style="margin-top:6px">${esc(g.selfNote)}</p>` : "") : `<span class="faint small">Shown once submitted</span>`}</div>`;
+    const mgrCol = mode === "mgr"
+      ? `<div><div class="who-rated">Appraiser rating</div>${rateCtl(i, "mgr", g.mgr)}<label class="f" for="mn${i}" style="margin-top:6px"><span>Evidence <span class="faint" id="need-mgr-${i}">${needsNote(g.mgr) ? "(required for this rating)" : "(optional)"}</span></span><textarea id="mn${i}" data-bind="goals.${i}.mgrNote" rows="2" maxlength="500">${esc(g.mgrNote)}</textarea></label></div>`
+      : `<div><div class="who-rated">Appraiser rating</div>${showMgr ? pill(g.mgr, "m") + (g.mgrNote ? `<p class="small muted" style="margin-top:6px">${esc(g.mgrNote)}</p>` : "") : `<span class="faint small">Shown once the appraiser submits</span>`}</div>`;
+    return `<div class="goal"><div class="goal-top"><div><div class="goal-title">${esc(g.title)}</div><div class="goal-meta"><span class="cat ${g.category}">${esc(g.category)}</span><span class="num">${g.weight}%</span></div></div></div>
+    <p class="small muted">${esc(g.target)}</p>
+    ${STAGE_IDX[a.stage] >= STAGE_IDX.self ? `<div class="rate-row">${selfCol}${mgrCol}</div>` : ""}</div>`;
+  }).join("")}</div></div>`;
+}
+function ta(id, bind, label, val, hint) { return `<label class="f" for="${id}"><span>${esc(label)}${hint ? ` <span class="faint">${esc(hint)}</span>` : ""}</span><textarea id="${id}" data-bind="${bind}" rows="2" maxlength="1000">${esc(val || "")}</textarea></label>`; }
+function sel(id, bind, label, val, opts) { return `<label class="f" for="${id}">${esc(label)}<select id="${id}" data-bind="${bind}"><option value="">Choose…</option>${opts.map(o => `<option ${val === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></label>`; }
+function trainingBoxes(list, bind) {
+  return `<fieldset style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;color:var(--ink-2);margin-bottom:6px">Training needed</legend><div class="cols">${TRAINING.map((t, i) => `<label class="small" style="display:flex;gap:6px;align-items:flex-start"><input type="checkbox" id="tr-${bind.replace(/\W/g, "")}-${i}" data-act="train" data-bind="${bind}" data-t="${esc(t)}" ${list.includes(t) ? "checked" : ""}> ${esc(t)}</label>`).join("")}</div></fieldset>`;
+}
+function summarySections(a, mode, showSelf, showMgr) {
+  const si = STAGE_IDX[a.stage]; let h = "";
+  if (mode === "self") h += `<div class="panel"><h2>My year in summary</h2><div style="display:grid;gap:12px;margin-top:12px">${ta("ss1", "selfSummary.achievements", "Key achievements", a.selfSummary.achievements, "(required)")}${ta("ss2", "selfSummary.challenges", "Challenges I faced", a.selfSummary.challenges)}${ta("ss3", "selfSummary.support", "Support or training I'd like", a.selfSummary.support)}</div></div>`;
+  else if (showSelf && si >= STAGE_IDX.appraiser) h += `<div class="panel"><h2>Seafarer's summary</h2><dl class="kv" style="margin-top:12px"><dt>Achievements</dt><dd>${esc(a.selfSummary.achievements) || "–"}</dd><dt>Challenges</dt><dd>${esc(a.selfSummary.challenges) || "–"}</dd><dt>Support wanted</dt><dd>${esc(a.selfSummary.support) || "–"}</dd></dl></div>`;
+  if (mode === "mgr") {
+    const p = a.appraiser; const nx = a.nextRank;
+    h += `<div class="panel"><h2>Appraiser's assessment</h2><div style="display:grid;gap:12px;margin-top:12px">
+      <div class="rate-row">${ta("ap1", "appraiser.strengths", "Strengths", p.strengths, "(required)")}${ta("ap2", "appraiser.improvements", "Areas to improve", p.improvements, "(required)")}</div>
+      <div class="rate-row">${sel("ap3", "appraiser.rehire", "Re-hire recommendation", p.rehire, ["Recommended", "With reservations", "Not recommended"])}${sel("ap4", "appraiser.promotion", "Promotion readiness" + (nx ? " to " + rankName(nx) : ""), p.promotion, nx ? ["Ready now", "Ready next year", "Not yet ready"] : ["Not applicable"])}</div>
+      ${trainingBoxes(p.training, "appraiser.training")}
+      ${ta("ap5", "appraiser.comment", "Other comments", p.comment)}</div></div>`;
+  } else if (showMgr && a.appraiser) {
+    const p = a.appraiser;
+    h += `<div class="panel"><h2>Appraiser's assessment</h2><dl class="kv" style="margin-top:12px"><dt>Strengths</dt><dd>${esc(p.strengths)}</dd><dt>To improve</dt><dd>${esc(p.improvements)}</dd><dt>Re-hire</dt><dd>${esc(p.rehire)}</dd><dt>Promotion</dt><dd>${esc(p.promotion)}</dd><dt>Training</dt><dd>${esc((p.training || []).join(", ") || "None")}</dd>${p.comment ? `<dt>Comments</dt><dd>${esc(p.comment)}</dd>` : ""}</dl></div>`;
+  }
+  if (mode === "ack") h += `<div class="panel"><h2>Your acknowledgement</h2><div style="display:grid;gap:10px;margin-top:12px"><div class="actions" role="radiogroup" aria-label="Do you agree?">
+      <label class="btn"><input type="radio" name="agree" data-bind="ack.agree" value="true" ${a.ack.agree === true ? "checked" : ""}> I agree with this appraisal</label>
+      <label class="btn"><input type="radio" name="agree" data-bind="ack.agree" value="false" ${a.ack.agree === false ? "checked" : ""}> I disagree</label></div>
+      ${ta("ak1", "ack.comment", "Comment", a.ack.comment, "(required if you disagree)")}</div></div>`;
+  else if (a.ack && si > STAGE_IDX.ack) h += `<div class="panel"><h2>Seafarer's acknowledgement</h2><p style="margin-top:8px">${a.ack.agree ? "Agreed with the appraisal." : "<b>Disagreed</b> with the appraisal."}${a.ack.comment ? ` <span class="muted">“${esc(a.ack.comment)}”</span>` : ""}</p></div>`;
+  if (mode === "rev") h += `<div class="panel"><h2>Countersign</h2><div style="margin-top:12px">${ta("rv1", "reviewer.comment", "Remarks", a.reviewer.comment, "(optional)")}</div></div>`;
+  else if (a.reviewer && si > STAGE_IDX.reviewer) h += `<div class="panel"><h2>Countersigned by ${esc(nm(a, a.reviewerId))}</h2>${a.reviewer.comment ? `<p class="muted" style="margin-top:8px">${esc(a.reviewer.comment)}</p>` : ""}</div>`;
+  if (mode === "office") {
+    const o = a.office; const nx = a.nextRank;
+    h += `<div class="panel"><h2>Office decision</h2><div style="display:grid;gap:12px;margin-top:12px">
+      <div class="rate-row">${sel("of1", "office.decision", "Re-hire decision", o.decision, ["Approved", "Approved with reservations", "Not for re-hire"])}
+      <label class="f" style="align-self:end"><span><input type="checkbox" id="of2" data-bind="office.promotionApproved" data-check="1" ${o.promotionApproved ? "checked" : ""} ${nx ? "" : "disabled"}> Approve promotion${nx ? " to " + esc(rankName(nx)) : " (no next rank)"}</span></label></div>
+      ${trainingBoxes(o.training, "office.training")}
+      ${ta("of3", "office.remarks", "Remarks", o.remarks, "(required for not for re-hire)")}</div></div>`;
+  } else if (a.office && a.stage === "done") h += `<div class="panel"><h2>Office decision</h2><dl class="kv" style="margin-top:12px"><dt>Re-hire</dt><dd>${esc(a.office.decision)}</dd><dt>Promotion</dt><dd>${a.office.promotionApproved ? "Approved" : "Not approved"}</dd><dt>Training</dt><dd>${esc((a.office.training || []).join(", ") || "None")}</dd>${a.office.remarks ? `<dt>Remarks</dt><dd>${esc(a.office.remarks)}</dd>` : ""}</dl></div>`;
+  return h;
+}
+function checksFor(a, mode) { return mode === "goals" ? goalChecks(a.goals) : mode === "self" ? selfChecks(a) : mode === "mgr" ? mgrChecks(a) : mode === "ack" ? ackChecks(a) : mode === "office" ? officeChecks(a) : []; }
+function actionPanel(a, mode) {
+  const cs = checksFor(a, mode); const ok = allOk(cs); const isSf = S.user.id === a.personId;
+  let primary = "", extra = "", save = `<button class="btn" type="button" data-act="do" data-k="save" ${S.busy ? "disabled" : ""}>Save draft</button>`, ret = null;
+  const dis = !ok || S.busy ? "disabled" : "";
+  if (mode === "goals") {
+    if (a.stage === "goals" && isSf) primary = `<button class="btn btn-primary" id="submit-btn" type="button" data-act="do" data-k="submitGoals" ${dis}>Send goals to ${esc(nm(a, a.appraiserId))}</button>`;
+    else { primary = `<button class="btn btn-primary" id="submit-btn" type="button" data-act="do" data-k="agreeGoals" ${dis}>Agree goals</button>`; if (a.stage === "goals_review") ret = { to: "the seafarer", k: "retGoals" }; }
+  }
+  if (mode === "self") primary = `<button class="btn btn-primary" id="submit-btn" type="button" data-act="do" data-k="submitSelf" ${dis}>Submit self-evaluation</button>`;
+  if (mode === "mgr") { primary = `<button class="btn btn-primary" id="submit-btn" type="button" data-act="do" data-k="submitMgr" ${dis}>Submit evaluation</button>`; ret = { to: "the seafarer", k: "retSelf" }; }
+  if (mode === "ack") { save = ""; primary = `<button class="btn btn-primary" id="submit-btn" type="button" data-act="do" data-k="submitAck" ${dis}>Submit acknowledgement</button>`; }
+  if (mode === "rev") { save = ""; primary = `<button class="btn btn-primary" id="submit-btn" type="button" data-act="do" data-k="countersign" ${S.busy ? "disabled" : ""}>Countersign</button>`; ret = { to: "the appraiser", k: "retAppr" }; }
+  if (mode === "office") { save = ""; primary = `<button class="btn btn-primary" id="submit-btn" type="button" data-act="do" data-k="approve" ${dis}>Approve and close</button>`; ret = { to: "the appraiser", k: "retAppr" }; }
+  if (ret) extra = S.open.ret ? `<div class="confirm" style="flex-basis:100%">${ta("retNote", "__ret", "What should " + ret.to + " change?", S.edit.ret, "(required)")}<div class="actions"><button class="btn btn-primary" type="button" data-act="do" data-k="${ret.k}">Send back to ${esc(ret.to)}</button><button class="btn btn-ghost" type="button" data-act="retclose">Cancel</button></div></div>` : `<button class="btn btn-ghost" type="button" data-act="retopen">Send back to ${esc(ret.to)}</button>`;
+  return `<div class="panel" id="act-panel"><h2>Before you submit</h2><div id="live-checks" style="margin-top:10px">${checksHtml(cs)}</div>
+  ${S.errors ? `<ul class="checks" style="margin-top:8px" role="alert">${S.errors.map(e => `<li class="bad">${esc(e)}</li>`).join("")}</ul>` : ""}
+  <div class="actions" style="margin-top:14px">${primary}${save}${extra}</div></div>`;
+}
+function updateLive() {
+  if (!S.edit) return;
+  const live = S.view.data && S.view.data.a; if (!live) return;
+  const a = S.edit.app, mode = editableFor(live); if (!mode) return;
+  S.edit.dirty = true;
+  const cs = checksFor(a, mode);
+  const lc = $("#live-checks"); if (lc) lc.innerHTML = checksHtml(cs);
+  const sb = $("#submit-btn"); if (sb && mode !== "rev") sb.disabled = !allOk(cs) || !!S.busy;
+  const wt = $("#wt-total"); if (wt) wt.textContent = a.goals.reduce((s, g) => s + (+g.weight || 0), 0) + "%";
+  if (mode === "self" || mode === "mgr") {
+    a.goals.forEach((g, i) => { for (const k of ["self", "mgr"]) { const n = $(`#need-${k}-${i}`); if (n) n.textContent = needsNote(g[k]) ? "(required for this rating)" : "(optional)"; } });
+    const so = overall(a.goals, "self"), mo = mode === "mgr" ? overall(a.goals, "mgr") : null;
+    if (mode === "self") { const e = $("#sc-self"); if (e) e.innerHTML = `${fmt(so)}<small> / 5</small>`; }
+    if (mode === "mgr") { const e = $("#sc-mgr"); if (e) e.innerHTML = `${fmt(mo)}<small> / 5</small>`; const b = $("#sc-mgr-b"); if (b) b.textContent = mo ? band(mo).label : "Not rated yet"; const gp = $("#sc-gap"); if (gp) gp.textContent = so && mo ? (so - mo >= 0 ? "+" : "") + (so - mo).toFixed(2) : "–"; }
+  }
+}
+async function doAction(k) {
+  const e = S.edit; if (!e || S.busy) return;
+  const live = S.view.data.a; const mode = editableFor(live); const A = e.app;
+  if (k.startsWith("ret") && !e.ret.trim()) { toast("Write what needs to change before sending it back."); return; }
+  if (!k.startsWith("ret") && k !== "save" && k !== "countersign") { const bad = checksFor(A, mode).filter(c => !c.ok); if (bad.length) { toast("Some items still need attention. See the list above the buttons."); return; } }
+  S.busy = "Saving…"; S.errors = null; render();
+  try {
+    const kind = k === "save" ? "save" : k;
+    const extra = k === "save" ? (mode === "goals" ? "goals" : mode) : k.startsWith("ret") ? e.ret.trim() : undefined;
+    const updated = await B.act(A.id, kind, A, extra);
+    S.busy = ""; S.view.data.a = updated;
+    if (k === "save") { S.edit = { id: updated.id, stage: updated.stage, app: mergeEdit(updated, A), ret: e.ret, dirty: false }; render(); toast("Draft saved"); return; }
+    S.edit = null; S.open.ret = false; render(); window.scrollTo({ top: 0 });
+    toast(updated.stage === "done" ? "Appraisal approved and closed" : `Sent on: now with ${nm(updated, updated.waitingOn)}`);
+  } catch (err) {
+    S.busy = ""; S.errors = err.errors || null;
+    if (err.status === 409) { S.edit = null; toast("This appraisal has moved on since you opened it. Showing the latest version."); reload(); return; }
+    render(); toast(err.message || "Couldn't save.");
+  }
+}
+/* keep the user's working copy after a draft save, but take ids from the server */
+function mergeEdit(server, local) { const c = clone(local); c.goals = c.goals.map((g, i) => ({ ...g, id: (server.goals[i] || g).id, _new: false })); return c; }
+/* ===== Global comparison (BR-16) — renders the comparison result from either backend ===== */
+const ord = n => n == null ? "–" : n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+const plural = name => name.replace(/(Officer|Engineer|Cadet|Seaman|Cook|Master)$/, m => ({ Officer: "Officers", Engineer: "Engineers", Cadet: "Cadets", Seaman: "Seamen", Cook: "Cooks", Master: "Masters" }[m])).replace(/^(Bosun|Fitter|Oiler|Messman)$/, m => m === "Messman" ? "Messmen" : m + "s");
+
+function viewCompare() {
+  const d = S.view.data;
+  if (d.none) return `<div class="panel empty">There is nobody in your scope to compare yet.</div>`;
+  const { people, pid, yr, cmp } = d; const r = cmp.result;
+  const isMe = pid === S.user.id, anon = S.user.role === "seafarer";
+  const who = isMe ? "You" : cmp.name;
+  const pl = plural(cmp.rankName);
+  const src = r.source && !r.source.isSample ? `Industry data: ${esc(r.source.source)}, uploaded ${esc(fdate(r.source.uploaded))}.` : `Industry data: built-in sample of 5 fictional ship managers. It is illustrative, not real company data.${S.user.role === "crewing" ? ` <a href="#bench">Upload real figures</a>.` : ""}`;
+  const fleetDots = cmp.ranking.filter(x => !x.isPerson).map(x => x.overall);
+  return `<div class="page-head"><div><h1>${isMe ? "How I compare" : "Compare"}</h1><p class="sub">${esc(cmp.name)} against every ${esc(cmp.rankName)} in our fleet and at other ship managers</p></div>
+    <div class="filters">${people.length > 1 ? `<label class="f" for="cmpP">Seafarer<select id="cmpP" data-nav="person">${people.map(x => `<option value="${esc(x.id)}" ${x.id === pid ? "selected" : ""}>${esc(x.name)} · ${esc(x.rankName)} · ${esc(x.vessel)}</option>`).join("")}</select></label>` : ""}
+    <label class="f" for="cmpY">Year<select id="cmpY" data-nav="year">${[YEAR, YEAR - 1].map(y => `<option ${y === yr ? "selected" : ""}>${y}</option>`).join("")}</select></label></div></div>
+  ${r.overall != null ? "" : `<div class="notice" style="margin:0;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span>${esc(cmp.name)} has no appraiser rating for ${yr} yet, so the figures below are blank and the chart shows where the rank stands. They fill in as soon as the appraiser submits.</span>${yr === YEAR && cmp.hasPreviousYear ? `<a class="btn btn-sm" href="#compare.${esc(pid)}.${YEAR - 1}">Show ${YEAR - 1} result</a>` : ""}</div>`}
+  <div class="tiles">
+    <div class="tile hl"><span class="eyebrow">Appraiser rating ${yr}</span><span class="big num">${fmt(r.overall)}<small> / 5</small></span><span class="small muted">${r.band ? esc(r.band) : "Not rated yet"}</span></div>
+    <div class="tile"><span class="eyebrow">Within our fleet</span><span class="big num">${r.overall != null ? ord(r.fleetRank) : "–"}<small> of ${r.fleetRated}</small></span><span class="small muted">${r.overall != null ? (r.fleetOthers ? `Higher than ${r.higherThanPctOfFleet}% of the other ${r.fleetOthers} ${esc(pl)} in our fleet${r.tiesInFleet ? `; level with ${r.tiesInFleet}` : ""}${r.smallGroup ? `. Only ${r.fleetOthers} rated so far, so read this with care` : ""}` : `No other ${esc(pl)} rated yet`) : `${r.fleetRated} ${esc(pl)} rated so far`}</span></div>
+    <div class="tile"><span class="eyebrow">Across the industry</span><span class="big num">${r.overall != null ? ord(r.industryPercentile) : "–"}<small> percentile</small></span><span class="small muted">${r.overall != null ? `Compared with ${r.industryOthers} other ${esc(pl)}` : `${r.industryRated} ${esc(pl)} rated`} at ${r.companies} companies, our fleet included</span></div>
+    ${yr === YEAR ? `<div class="tile"><span class="eyebrow">Self vs appraiser</span><span class="big num">${r.overall != null && r.selfOverall != null ? (r.selfOverall - r.overall >= 0 ? "+" : "") + (r.selfOverall - r.overall).toFixed(2) : "–"}</span><span class="small muted">${r.overall != null && r.selfOverall != null ? `Self ${fmt(r.selfOverall)}, appraiser ${fmt(r.overall)}` : "Shown after both have rated"}</span></div>` : ""}
+  </div>
+  <div class="panel"><header><h2>Where ${isMe ? "you stand" : esc(cmp.name) + " stands"} among ${esc(pl)}</h2><div class="legend"><span><i style="background:var(--accent)"></i>${esc(who)}</span><span><i style="background:var(--fleet)"></i>Our fleet</span><span><i style="background:var(--ink-3)"></i>Other companies</span></div></header>
+    <div class="tbl-wrap" style="margin-top:6px">${boxChart(r, fleetDots, who, cmp.rankName)}</div>
+    <p class="faint small" style="margin-top:8px">Bars run from the 10th to the 90th percentile; the box is the middle half and the tick is the median. Hover a row for its numbers. ${src}</p></div>
+  <div class="grid2">
+    <div class="panel"><header><h2>By goal area</h2><div class="legend"><span><i style="background:var(--accent)"></i>${esc(isMe ? "You" : cmp.name.split(" ")[0])}</span><span><i style="background:var(--fleet);border-radius:2px"></i>Fleet average</span><span><i style="background:var(--ink-3);transform:rotate(45deg) scale(.8);border-radius:1px"></i>Industry average</span></div></header>
+      <div class="tbl-wrap" style="margin-top:6px">${catChart(r.categories)}</div></div>
+    <div class="panel"><header><h2>Our ${esc(pl)}, ${yr}</h2><span class="faint small">${anon ? "Colleagues are not named" : "Appraiser rating"}</span></header>
+      <div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th class="r">#</th><th>${anon ? "Seafarer" : "Name"}</th><th>Vessel</th><th class="r">Rating</th></tr></thead><tbody>
+      ${cmp.ranking.map(x => `<tr class="${x.isPerson ? "me" : ""}"><td class="r num">${x.position}</td><td>${x.isPerson ? `<b>${esc(isMe ? "You" : x.name)}</b>` : x.name ? `<a href="#compare.${esc(x.id)}.${yr}">${esc(x.name)}</a>` : "Colleague"}</td><td class="small">${esc(x.vesselName || "–")}</td><td class="r num">${fmt(x.overall)}</td></tr>`).join("") || `<tr><td colspan="4" class="empty">Nobody rated yet.</td></tr>`}
+      </tbody></table></div></div>
+  </div>
+  ${d.fvi ? fleetVsIndustry(d.fvi, yr) : ""}`;
+}
+
+function boxChart(r, fleetDots, meLabel, rankNm) {
+  const W = 760, L = 200, R = 32, top = 34, rh = 38;
+  const X = v => L + (v - 1) / 4 * (W - L - R);
+  const series = r.distributions; const me = r.overall;
+  const H = top + series.length * rh + 30;
+  let s = `<svg class="chart box" viewBox="0 0 ${W} ${H}" role="img" aria-label="Distribution of ratings for ${esc(rankNm)} by company">`;
+  for (let v = 1; v <= 5; v++) s += `<line x1="${X(v)}" x2="${X(v)}" y1="${top - 6}" y2="${H - 26}" stroke="var(--line)" stroke-width="1"/><text class="tick" x="${X(v)}" y="${H - 10}" text-anchor="middle">${v}</text>`;
+  series.forEach((st, i) => {
+    const y = top + i * rh + rh / 2;
+    const col = st.kind === "fleet" ? "var(--fleet)" : "var(--ink-3)", fill = st.kind === "fleet" ? "var(--fleet-soft)" : "var(--surface-2)";
+    if (st.kind === "all") s += `<line x1="0" x2="${W}" y1="${y - rh / 2}" y2="${y - rh / 2}" stroke="var(--line-2)"/>`;
+    s += `<text class="lbl" x="0" y="${y + 4}" style="${st.kind !== "company" ? "font-weight:700" : ""}">${esc(st.label)}</text><text class="lbl2" x="${L - 12}" y="${y + 4}" text-anchor="end">n=${st.n}</text>`;
+    if (st.n) {
+      s += `<line x1="${X(st.p10)}" x2="${X(st.p90)}" y1="${y}" y2="${y}" stroke="${col}" stroke-width="2" stroke-linecap="round"/>`;
+      s += `<rect x="${X(st.p25)}" y="${y - 8}" width="${Math.max(2, X(st.p75) - X(st.p25))}" height="16" rx="3" fill="${fill}" stroke="${col}" stroke-width="1.5"/>`;
+      s += `<line x1="${X(st.p50)}" x2="${X(st.p50)}" y1="${y - 8}" y2="${y + 8}" stroke="var(--ink)" stroke-width="2"/>`;
+      if (st.kind === "fleet") fleetDots.forEach(v => { s += `<circle cx="${X(v)}" cy="${y}" r="3.5" fill="var(--fleet)" stroke="var(--surface)" stroke-width="1.5"/>`; });
+    }
+    const tip = st.n ? `${st.label} · ${plural(rankNm)}: ${st.n} rated. Median ${st.p50.toFixed(2)}; middle half ${st.p25.toFixed(2)}–${st.p75.toFixed(2)}.${me != null && st.higherThanPct != null ? ` ${meLabel === "You" ? "You scored" : meLabel + " scored"} higher than ${st.higherThanPct}% of ${st.kind === "company" ? "them" : "the others"}.` : ""}` : `${st.label}: no ratings`;
+    s += `<rect x="0" y="${y - rh / 2}" width="${W}" height="${rh}" fill="transparent" data-tip="${esc(tip)}"/>`;
+  });
+  if (me != null) {
+    const x = X(me);
+    s += `<line x1="${x}" x2="${x}" y1="${top - 8}" y2="${H - 26}" stroke="var(--accent)" stroke-width="2"/><text x="${Math.min(x, W - 4)}" y="${top - 14}" text-anchor="${x > W - 120 ? "end" : "middle"}" fill="var(--accent)" style="font-size:12px;font-weight:700">${esc(meLabel)} · ${Number(me).toFixed(2)}</text>`;
+    s += `<circle cx="${x}" cy="${top + rh / 2}" r="6" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+  }
+  return s + `</svg>`;
+}
+function catChart(cats) {
+  const W = 560, L = 110, R = 24, top = 10, rh = 40;
+  const X = v => L + (v - 1) / 4 * (W - L - R);
+  const H = top + cats.length * rh + 26;
+  let s = `<svg class="chart cat" viewBox="0 0 ${W} ${H}" role="img" aria-label="Ratings by goal area compared with fleet and industry averages">`;
+  for (let v = 1; v <= 5; v++) s += `<line x1="${X(v)}" x2="${X(v)}" y1="${top}" y2="${H - 22}" stroke="var(--line)"/><text class="tick" x="${X(v)}" y="${H - 6}" text-anchor="middle">${v}</text>`;
+  cats.forEach((c, i) => {
+    const y = top + i * rh + rh / 2; const ind = c.industryAverage, fl = c.fleetAverage, mv = c.person;
+    const vals = [ind, fl, mv].filter(v => v != null);
+    s += `<text class="lbl" x="0" y="${y + 4}">${esc(c.category)}</text>`;
+    if (vals.length > 1) s += `<line x1="${X(Math.min(...vals))}" x2="${X(Math.max(...vals))}" y1="${y}" y2="${y}" stroke="var(--line-2)" stroke-width="3" stroke-linecap="round"/>`;
+    if (ind != null) s += `<rect x="${X(ind) - 5}" y="${y - 5}" width="10" height="10" transform="rotate(45 ${X(ind)} ${y})" fill="var(--ink-3)" stroke="var(--surface)" stroke-width="1.5"/>`;
+    if (fl != null) s += `<rect x="${X(fl) - 5.5}" y="${y - 5.5}" width="11" height="11" rx="2" fill="var(--fleet)" stroke="var(--surface)" stroke-width="1.5"/>`;
+    if (mv != null) s += `<circle cx="${X(mv)}" cy="${y}" r="7" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+    s += `<rect x="0" y="${y - rh / 2}" width="${W}" height="${rh}" fill="transparent" data-tip="${esc(`${c.category}: ${mv != null ? "rating " + Number(mv).toFixed(1) + " · " : ""}fleet average ${fl != null ? fl.toFixed(2) : "–"} · industry average ${ind != null ? ind.toFixed(2) : "–"}`)}"/>`;
+  });
+  return s + `</svg>`;
+}
+function fleetVsIndustry(lines, yr) {
+  const maxD = Math.max(0.3, ...lines.map(l => Math.abs(l.difference)));
+  return `<div class="panel"><header><h2>Our fleet against the industry, ${yr}</h2><span class="faint small">Median appraiser rating per rank</span></header>
+  <div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>Rank</th><th>Level</th><th class="r">Our crew rated</th><th class="r">Our median</th><th class="r">Industry median</th><th style="min-width:180px">Difference</th><th class="r">Industry percentile</th></tr></thead><tbody>
+  ${lines.map(l => `<tr><td><b>${esc(l.rankName)}</b></td><td><span class="lvl">${esc(LEVEL_FROM(l.level))}</span></td><td class="r num">${l.ourRated}</td><td class="r num">${l.ourMedian.toFixed(2)}</td><td class="r num">${l.industryMedian.toFixed(2)}</td>
+    <td><div style="position:relative;height:14px;background:var(--surface-2);border-radius:3px"><span style="position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--ink-3)"></span><span style="position:absolute;top:2px;height:10px;${l.difference >= 0 ? `left:50%;border-radius:0 3px 3px 0;background:var(--good)` : `right:50%;border-radius:3px 0 0 3px;background:var(--crit)`};width:${(Math.abs(l.difference) / maxD * 50).toFixed(1)}%"></span></div><span class="num small ${l.difference >= 0 ? "" : "err"}">${(l.difference >= 0 ? "+" : "") + l.difference.toFixed(2)}</span></td>
+    <td class="r num">${ord(l.industryPercentile)}</td></tr>`).join("")}</tbody></table></div></div>`;
+}
+/* ===== Benchmark data (Crewing Manager) ===== */
+const CSV_TEMPLATE = `company,rank,year,overall,safety,operations,compliance,teamwork,development,conduct
+Manager X,2O,2025,3.6,4,3,4,3,4,
+Manager X,AB,2025,3.2,3,3,,,3,4
+Manager Y,Chief Engineer,2025,4.1,4,4,5,4,4,`;
+const RANK_ALIAS = { "C/O": "CO", "2/O": "2O", "3/O": "3O", "C/E": "CE", "2/E": "2E", "3/E": "3E", "4/E": "4E", "D/CDT": "DCD", "CADET": "DCD", "BOSUN": "BSN", "BOATSWAIN": "BSN", "FITTER": "FTR", "OILER": "OLR", "CH/COOK": "CCK", "COOK": "CCK", "MESSMAN": "MSM", "CAPTAIN": "MST" };
+function rankCode(x) { const u = String(x || "").trim().toUpperCase(); if (RANKS[u]) return u; if (RANK_ALIAS[u]) return RANK_ALIAS[u]; return Object.keys(RANKS).find(k => RANKS[k].name.toUpperCase() === u) || null; }
+function splitCsv(line) { const out = []; let cur = "", qd = false; for (let i = 0; i < line.length; i++) { const c = line[i]; if (qd) { if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') qd = false; else cur += c; } else if (c === '"') qd = true; else if (c === ",") { out.push(cur); cur = ""; } else cur += c; } out.push(cur); return out.map(s => s.trim()); }
+function parseBench(text, name) {
+  const lines = text.replace(/^﻿/, "").split(/\r?\n/).filter(l => l.trim());
+  const errors = [], rows = [];
+  if (!lines.length) return { name, rows, errors: ["The file is empty."] };
+  const head = splitCsv(lines[0]).map(h => h.toLowerCase()); const col = k => head.indexOf(k);
+  for (const k of ["company", "rank", "year", "overall"]) if (col(k) < 0) errors.push(`Column “${k}” is missing from the first row.`);
+  if (errors.length) return { name, rows, errors };
+  for (let i = 1; i < lines.length; i++) {
+    const c = splitCsv(lines[i]);
+    const rk = rankCode(c[col("rank")]), yr = parseInt(c[col("year")], 10), ov = parseFloat(c[col("overall")]), co = c[col("company")];
+    if (!co) { errors.push(`Line ${i + 1}: company is empty.`); continue; }
+    if (!rk) { errors.push(`Line ${i + 1}: rank “${c[col("rank")]}” is not one we know.`); continue; }
+    if (!(yr >= 2000 && yr <= 2100)) { errors.push(`Line ${i + 1}: year “${c[col("year")]}” is not valid.`); continue; }
+    if (!(ov >= 1 && ov <= 5)) { errors.push(`Line ${i + 1}: overall must be between 1 and 5.`); continue; }
+    const cats = CATS.map(k => { const j = col(k.toLowerCase()); const v = j >= 0 ? parseFloat(c[j]) : NaN; return v >= 1 && v <= 5 ? v : null; });
+    rows.push([co.slice(0, 60), rk, yr, round2(ov), ...cats]);
+  }
+  return { name, rows, errors };
+}
+function viewBench() {
+  const b = S.view.data.bench; const up = S.upload; const src = b.source;
+  return `<div class="page-head"><div><h1>Benchmark data</h1><p class="sub">Ratings from other ship managers, used for the industry comparison</p></div></div>
+  <div class="grid2">
+    <div class="panel"><header><h2>In use now</h2>${src.isSample ? `<span class="chip st-self">Sample data</span>` : `<span class="chip st-done">Uploaded data</span>`}</header>
+      <p class="muted" style="margin-top:8px">${src.isSample ? "A built-in sample of five fictional ship managers. It shows how the comparison works; it is not real company data." : `${esc(src.source)} · uploaded ${esc(fdate(src.uploaded))} · ${src.rows} ratings`}</p>
+      <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Company</th><th class="r">Ratings</th><th>Years</th><th class="r">Ranks</th></tr></thead><tbody>${b.companies.map(c => `<tr><td>${esc(c.company)}</td><td class="r num">${c.ratings}</td><td class="num small">${esc(c.years.join(", "))}</td><td class="r num">${c.ranks}</td></tr>`).join("")}</tbody></table></div>
+      ${src.isSample ? "" : `<div class="actions" style="margin-top:12px"><button class="btn" type="button" data-act="benchclear">Go back to the sample data</button></div>`}</div>
+    <div class="panel"><h2>Upload real benchmark data</h2>
+      <p class="muted small" style="margin-top:8px">Use anonymised ratings from a manning agency, a data-sharing pool or a survey. One row per seafarer rating, on the same 1–5 scale. Category columns are optional. Uploading replaces the data in use for everyone.</p>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px">
+        <label class="f" for="benchFile">CSV file<input id="benchFile" type="file" accept=".csv,text/csv"></label>
+        ${up ? `<div class="confirm"><b>${esc(up.name)}</b><span>${up.preview.rows.length} rows ready${up.preview.errors.length ? ` · ${up.preview.errors.length} rows skipped` : ""}</span>
+          ${up.preview.errors.length ? `<ul class="checks">${up.preview.errors.slice(0, 6).map(e => `<li class="bad">${esc(e)}</li>`).join("")}${up.preview.errors.length > 6 ? `<li class="bad">…and ${up.preview.errors.length - 6} more</li>` : ""}</ul>` : ""}
+          ${up.preview.rows.length ? `<label class="f" for="benchSrc">Where the data comes from<input id="benchSrc" type="text" value="${esc(up.name)}" placeholder="e.g. Manning agency pool, Q3 2026"></label>
+          <div class="actions"><button class="btn btn-primary" type="button" data-act="benchsave" ${S.busy ? "disabled" : ""}>${S.busy || "Use this data"}</button><button class="btn btn-ghost" type="button" data-act="benchcancel">Cancel</button></div>` : ""}</div>` : ""}
+        <div><div class="eyebrow" style="margin-bottom:6px">File layout</div><pre id="csvTpl" class="num small" style="margin:0;padding:10px;background:var(--surface-2);border-radius:var(--r);overflow-x:auto">${esc(CSV_TEMPLATE)}</pre>
+        <div class="actions" style="margin-top:8px"><button class="btn btn-sm" type="button" data-act="copytpl">Copy layout</button><span class="faint small">Rank can be a code (2O), an abbreviation (2/O) or a name (Second Officer).</span></div></div>
+      </div></div>
+  </div>`;
+}
+
+/* ===== Demo data (Crewing Manager) ===== */
+function viewAdmin() {
+  return `<div class="page-head"><div><h1>Demo data</h1><p class="sub">What everyone sees on this desk</p></div></div>
+  <div class="panel" style="max-width:720px"><h2>Reset to the starting point</h2>
+  <p class="muted" style="margin-top:8px">Puts every ${YEAR} appraisal back to how the demo started, so you can run the walkthrough again: Joseph Santos (2/O) has a self-evaluation to do, Budi Kusuma (AB) has goals to set, Rahul Mehta (C/O) has evaluations waiting and the Master has countersigns waiting. Uploaded benchmark data and passwords are kept.</p>
+  <div style="margin-top:14px">${S.open.reset ? `<div class="confirm"><b>Reset every appraisal for everyone?</b><span class="small">Anything people entered since the start is lost.</span><div class="actions"><button class="btn btn-primary" type="button" data-act="resetgo" ${S.busy ? "disabled" : ""}>${S.busy || "Yes, reset demo data"}</button><button class="btn btn-ghost" type="button" data-act="resetno">Cancel</button></div></div>` : `<button class="btn" type="button" data-act="reset">Reset demo data</button>`}</div></div>`;
+}
+
+/* ===== Events ===== */
+function setPath(obj, path, val) { const ks = path.split("."); let o = obj; for (let i = 0; i < ks.length - 1; i++) o = o[/^\d+$/.test(ks[i]) ? +ks[i] : ks[i]]; o[ks[ks.length - 1]] = val; }
+const ACT = {
+  quick: d => doLogin(d.id, "demo"),
+  logout: async () => { await B.logout(); S.user = null; S.edit = null; S.open = {}; S.notice = API ? "" : S.notice; S.demo = null; S.view = { name: "login", args: [] }; history.replaceState(null, "", "#login"); route(); window.scrollTo(0, 0); },
+  back: () => { if (history.length > 1) history.back(); else go(defaultRoute(S.user)); },
+  rate: (d, el) => {
+    const a = S.edit && S.edit.app; if (!a) return;
+    const v = +d.v; a.goals[+d.gi][d.key] = v;
+    el.parentElement.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === v)));
+    const l = $(`#rl-${d.key}-${d.gi}`); if (l) l.textContent = SCALE[v - 1].label;
+    updateLive();
+  },
+  rmgoal: d => { S.edit.app.goals.splice(+d.gi, 1); S.edit.dirty = true; render(); },
+  addgoal: () => { const a = S.edit.app; if (a.goals.length >= 6) return; const i = $("#libSel") ? $("#libSel").value : ""; const g = i !== "" ? GOAL_LIBRARY[+i] : { title: "", category: "Operations", target: "" }; a.goals.push({ id: "n" + Date.now().toString(36), _new: true, title: g.title, category: g.category, target: g.target, weight: 10, self: null, selfNote: "", mgr: null, mgrNote: "" }); S.edit.dirty = true; render(); const n = a.goals.length - 1; const el = $("#gt" + n); if (el) { el.scrollIntoView({ block: "center" }); if (!g.title) el.focus(); } },
+  tplgoals: () => { const a = S.edit.app; a.goals = TEMPLATES[a.level].map((g, i) => ({ id: "g" + (i + 1), ...g, self: null, selfNote: "", mgr: null, mgrNote: "" })); S.edit.dirty = true; render(); },
+  retopen: () => { S.open.ret = true; render(); const t = $("#retNote"); if (t) t.focus(); },
+  retclose: () => { S.open.ret = false; render(); },
+  do: d => doAction(d.k),
+  reset: () => { S.open.reset = true; render(); },
+  resetno: () => { S.open.reset = false; render(); },
+  resetgo: async () => { if (S.busy) return; S.busy = "Resetting…"; S.edit = null; render(); try { await B.resetDemo(); toast("Demo data reset"); } catch (e) { toast(e.message || "Couldn't reset."); } S.busy = ""; S.open.reset = false; render(); },
+  benchsave: async () => { if (S.busy) return; const src = (($("#benchSrc") || {}).value || S.upload.name).trim() || S.upload.name; S.busy = "Saving…"; render(); try { await B.saveBench(S.upload, src); S.upload = null; toast("Benchmark data saved. Every comparison now uses it."); } catch (e) { toast(e.message || "Couldn't save."); } S.busy = ""; reload(); },
+  benchcancel: () => { S.upload = null; render(); },
+  benchclear: async () => { try { await B.resetBench(); toast("Back to the sample benchmark"); } catch (e) { toast(e.message); } reload(); },
+  copytpl: () => { const done = () => toast("Layout copied"); try { navigator.clipboard.writeText(CSV_TEMPLATE).then(done, () => selectTpl()); } catch (e) { selectTpl(); } }
+};
+function selectTpl() { const el = $("#csvTpl"); if (!el) return; const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Layout selected. Press Ctrl+C or Cmd+C to copy."); }
+
+document.addEventListener("click", e => {
+  const link = e.target.closest && e.target.closest("a[href^='#app.']");
+  if (link) { S.from = S.view.name === "app" ? S.from : S.view.name; }
+  const el = e.target.closest("[data-act]");
+  if (!el || el.tagName === "INPUT") return;
+  if (el.tagName === "A") e.preventDefault();
+  const fn = ACT[el.dataset.act]; if (fn) fn(el.dataset, el);
+});
+document.addEventListener("submit", async e => {
+  if (e.target.id === "loginForm") { e.preventDefault(); doLogin($("#lid").value, $("#lpw").value); }
+  if (e.target.id === "pwForm") {
+    e.preventDefault(); const a = $("#pw0").value, b = $("#pw1").value, c = $("#pw2").value;
+    if (b !== c) { S.pwMsg = "The two new passwords don't match."; S.pwOk = false; render(); return; }
+    try { await B.changePassword(a, b); S.pwMsg = "Password changed."; S.pwOk = true; } catch (err) { S.pwMsg = (err.errors && err.errors[0]) || err.message; S.pwOk = false; }
+    render();
+  }
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.bind && S.edit && !["checkbox", "radio"].includes(t.type) && t.tagName !== "SELECT") {
+    if (t.dataset.bind === "__ret") { S.edit.ret = t.value; return; }
+    setPath(S.edit.app, t.dataset.bind, t.dataset.num ? (t.value === "" ? "" : parseInt(t.value, 10)) : t.value);
+    updateLive(); return;
+  }
+  if (t.dataset.filter === "q") { S.fleetF.q = t.value; clearTimeout(t._d); t._d = setTimeout(() => { const pos = t.selectionStart; renderPending = false; render(); const n = $("#fq"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 250); }
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.bind && S.edit) {
+    if (t.dataset.act === "train") { const ks = t.dataset.bind.split("."); const list = S.edit.app[ks[0]][ks[1]]; const i = list.indexOf(t.dataset.t); if (t.checked && i < 0) list.push(t.dataset.t); if (!t.checked && i >= 0) list.splice(i, 1); updateLive(); return; }
+    if (t.type === "radio") { setPath(S.edit.app, t.dataset.bind, t.value === "true"); updateLive(); return; }
+    if (t.type === "checkbox") { setPath(S.edit.app, t.dataset.bind, t.checked); updateLive(); return; }
+    if (t.tagName === "SELECT") { setPath(S.edit.app, t.dataset.bind, t.value); updateLive(); return; }
+  }
+  if (t.dataset.filter && t.dataset.filter !== "q") { S.fleetF[t.dataset.filter] = t.value; t.blur(); render(); return; }
+  if (t.dataset.nav) { const d = S.view.data; const pid = t.dataset.nav === "person" ? t.value : d.pid; const yr = t.dataset.nav === "year" ? +t.value : (t.dataset.nav === "person" ? "" : d.yr); t.blur(); go("compare." + pid + (yr ? "." + yr : "")); return; }
+  if (t.id === "benchFile" && t.files && t.files[0]) { const f = t.files[0]; f.text().then(async txt => { S.upload = await B.parseBench(txt, f.name); render(); }, () => toast("Couldn't read that file.")); }
+});
+let tipEl;
+document.addEventListener("mousemove", e => {
+  const h = e.target.closest && e.target.closest("[data-tip]");
+  if (!h) { if (tipEl) tipEl.hidden = true; return; }
+  if (!tipEl) { tipEl = document.createElement("div"); tipEl.className = "tip"; document.body.appendChild(tipEl); }
+  tipEl.textContent = h.getAttribute("data-tip"); tipEl.hidden = false;
+  const x = Math.min(e.clientX + 14, innerWidth - tipEl.offsetWidth - 8); tipEl.style.left = x + "px"; tipEl.style.top = (e.clientY + 16) + "px";
+});
+function afterRender() { if (tipEl) tipEl.hidden = true; }
+window.addEventListener("hashchange", () => {
+  if (S.edit && S.edit.dirty && S.view.name !== "login") {
+    // Unsaved changes: keep them in memory; they come back if the user returns to the same appraisal at the same step.
+    toast("Your unsaved changes are kept until you leave the app. Save a draft to keep them for good.");
+  }
+  route();
+});
+window.addEventListener("beforeunload", e => { if (S.edit && S.edit.dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+/* ===== Boot ===== */
+render();
+route();
+</script>
+</body></html>
