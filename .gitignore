@@ -20,3 +20,11 @@ playwright-report/
 Thumbs.db
 .idea/
 .vscode/
+# Mobile
+mobile/android/build/
+mobile/android/dist/
+mobile/android/keystore/
+*.jks
+*.keystore
+mobile/ios/App/App/public/
+mobile/ios/App/build/

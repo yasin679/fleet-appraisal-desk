@@ -1,0 +1,11 @@
+{
+  "appId": "com.yasinjariwala.fleetappraisal",
+  "appName": "Fleet Appraisal Desk",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#13212E",
+    "scheme": "FleetAppraisal",
+    "limitsNavigationsToAppBoundDomains": false
+  }
+}

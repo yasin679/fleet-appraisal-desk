@@ -47,6 +47,10 @@ Open http://localhost:5077. The first start creates `App_Data/appraisal.db` with
 
 There's also a no-install version: open [`prototype/fleet-appraisal-desk.html`](prototype/fleet-appraisal-desk.html) in a browser. It runs the same screens, rules and maths with in-memory demo data.
 
+## Mobile app
+
+An offline demo of the same module for Android and iPhone is in [`mobile/`](mobile/README.md): an Android APK (`com.yasinjariwala.fleetappraisal`, Android 7+), an Xcode project for iOS 14+, and an installable web app for "Add to Home Screen". The [Mobile workflow](.github/workflows/mobile.yml) builds the APK, an unsigned `.ipa` and a simulator build, and publishes the web app to GitHub Pages.
+
 ## Repository layout
 
 ```
@@ -60,8 +64,10 @@ tests/
   e2e/                         Playwright browser test
 database/                      SQL Server schema (appr), reference data, demo data
 prototype/                     stand-alone single-file version
+mobile/                        Android APK build, iOS (Capacitor) project, installable web app
 docs/                          12-document documentation pack (Markdown) and images
 .github/workflows/ci.yml       build, all tests, publish artifact for IIS
+.github/workflows/mobile.yml   APK, iOS builds, web app on GitHub Pages
 ```
 
 ## Architecture

@@ -1,0 +1,19 @@
+{
+  "name": "fleet-appraisal-desk-mobile",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Fleet Appraisal Desk mobile apps (Android and iOS) wrapping the offline web app in mobile/www",
+  "scripts": {
+    "build:web": "bash ../web/build.sh",
+    "build:apk": "bash android/build-apk.sh",
+    "ios:sync": "npm run build:web && npx cap sync ios",
+    "ios:open": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}

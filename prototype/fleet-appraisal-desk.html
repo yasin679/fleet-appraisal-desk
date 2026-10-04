@@ -451,7 +451,10 @@ const today = () => new Date().toISOString().slice(0, 10);
 const fmt = x => x == null ? "–" : Number(x).toFixed(2);
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const fdate = d => d ? `${+d.slice(8, 10)} ${MONTHS[+d.slice(5, 7) - 1]} ${d.slice(0, 4)}` : "";
-const ss = { get(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} } };
+const DEVICE = !!window.FAD_DEVICE; // mobile app / installed web app: keep data and sign-in on this device
+const ss = (() => { const st = () => DEVICE ? localStorage : sessionStorage; return { get(k) { try { return st().getItem(k); } catch (e) { return null; } }, set(k, v) { try { v == null ? st().removeItem(k) : st().setItem(k, v); } catch (e) {} } }; })();
+const DEVICE_KEY = "fad-device-data-v1";
+function persistDevice() { if (L.mode !== "device") return; try { localStorage.setItem(DEVICE_KEY, JSON.stringify({ apps: L.apps, bench: L.bench, benchMeta: L.benchMeta })); } catch (e) { S.notice = "This device is out of storage space; recent changes may not be kept."; } }
 const vesselName = id => (VESSELS.find(v => v.id === id) || {}).name || id || "";
 const rankName = r => (RANKS[r] || {}).name || r;
 function roleOfRank(rank) { return rank === "MST" ? "master" : ["CO", "CE", "CCK"].includes(rank) ? "hod" : "seafarer"; }
@@ -667,7 +670,7 @@ const LocalBackend = {
   async parseBench(text, name) { return { name, text, preview: parseBench(text, name) }; },
   async saveBench(up, source) {
     const rows = up.preview.rows;
-    if (L.mode !== "db") { L.bench = rows; L.benchMeta = { source, uploaded: today(), rowCount: rows.length, chunks: 0 }; return; }
+    if (L.mode !== "db") { L.bench = rows; L.benchMeta = { source, uploaded: today(), rowCount: rows.length, chunks: 0 }; persistDevice(); return; }
     const size = 1500, n = Math.ceil(rows.length / size);
     for (let i = 0; i < n; i++) await DB.doc("benchmark/c" + i).set({ rows: rows.slice(i * size, (i + 1) * size) });
     const old = (L.benchMeta && L.benchMeta.chunks) || 0;
@@ -675,10 +678,10 @@ const LocalBackend = {
     for (let i = n; i < old; i++) await DB.doc("benchmark/c" + i).delete();
     L.bench = rows; L.benchMeta = { source, uploaded: today(), rowCount: rows.length, chunks: n };
   },
-  async resetBench() { if (L.mode !== "db") { L.bench = null; L.benchMeta = null; return; } const n = (L.benchMeta && L.benchMeta.chunks) || 0; await DB.doc("benchmark/meta").delete(); for (let i = 0; i < n; i++) await DB.doc("benchmark/c" + i).delete(); L.bench = null; L.benchMeta = null; },
+  async resetBench() { if (L.mode !== "db") { L.bench = null; L.benchMeta = null; persistDevice(); return; } const n = (L.benchMeta && L.benchMeta.chunks) || 0; await DB.doc("benchmark/meta").delete(); for (let i = 0; i < n; i++) await DB.doc("benchmark/c" + i).delete(); L.bench = null; L.benchMeta = null; },
   async resetDemo() {
     const f = sampleFleet();
-    if (L.mode !== "db") { L.roster = f.roster; L.hist = f.hist; L.apps = Object.fromEntries(f.apps.map(a => [a.id, a])); return; }
+    if (L.mode !== "db") { L.roster = f.roster; L.hist = f.hist; L.apps = Object.fromEntries(f.apps.map(a => [a.id, a])); persistDevice(); return; }
     await DB.doc("fleet/roster").set({ people: f.roster }); await DB.doc("fleet/history2025").set({ people: f.hist });
     let i = 0; for (const a of f.apps) { await DB.doc("appraisals/" + a.id).set(a); S.busy = `Resetting ${++i} of ${f.apps.length}…`; const b = $("[data-act=resetgo]"); if (b) b.textContent = S.busy; }
   }
@@ -689,6 +692,7 @@ function mergeRatings(target, src, key, note) { return target.map(g => { const s
 function actionLabel(stage) { return { goals: "Set goals", goals_review: "Agree goals", self: "Complete self-evaluation", appraiser: "Evaluate", ack: "Read and acknowledge", reviewer: "Countersign", office: "Approve and close" }[stage] || "Open"; }
 function saveL(a) {
   L.apps[a.id] = a;
+  if (L.mode === "device") { persistDevice(); return Promise.resolve(); }
   if (L.mode !== "db") return Promise.resolve();
   const prev = writeQ[a.id] || Promise.resolve();
   const p = prev.then(() => DB.doc("appraisals/" + a.id).set(a)).catch(e => { throw new ApiError(500, dbErrText(e)); });
@@ -696,8 +700,13 @@ function saveL(a) {
 }
 function dbErrText(e) { const c = e && e.code; if (c === "invalid_argument") return "You can't save changes on this copy. Ask the owner to share it with you as a Contributor or Editor."; if (c === "quota_exceeded") return "Storage for this page is full."; if (c === "resource_exhausted") return "Too many changes at once. Wait a few seconds and try again."; return "Couldn't save. Check your connection and try again."; }
 function goLocalMemory() { const f = sampleFleet(); L.mode = "local"; L.roster = f.roster; L.hist = f.hist; L.apps = Object.fromEntries(f.apps.map(a => [a.id, a])); S.notice = "This copy isn't connected to shared storage, so changes last only until you close the page."; }
+function goLocalDevice() {
+  const f = sampleFleet(); L.mode = "device"; L.roster = f.roster; L.hist = f.hist; L.apps = Object.fromEntries(f.apps.map(a => [a.id, a]));
+  try { const saved = JSON.parse(localStorage.getItem(DEVICE_KEY) || "null"); if (saved && saved.apps) { L.apps = saved.apps; L.bench = saved.bench || null; L.benchMeta = saved.benchMeta || null; } } catch (e) {}
+}
 LocalBackend.ready = new Promise(resolve => {
   if (API) return resolve();
+  if (DEVICE) { goLocalDevice(); return resolve(); }
   let done = false; const finish = () => { if (!done) { done = true; resolve(); } };
   const timer = setTimeout(() => { if (L.mode === "connecting") goLocalMemory(); finish(); }, 12000);
   (async () => {
